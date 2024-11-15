@@ -374,6 +374,6 @@ esegui_azione() {
 # Loop principale
 while true; do
   mostra_menu
-  read -p "Seleziona un'opzione (1-4): " scelta
+  read -p "Seleziona un'opzione (1-5): " scelta
   esegui_azione $scelta
 done
