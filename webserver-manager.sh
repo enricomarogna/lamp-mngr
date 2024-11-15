@@ -109,15 +109,20 @@ EOF
   fi
 
   # Installa i pacchetti aggiuntivi in base alla versione di PHP
-  if [[ $php_version == "8.1" ]]; then
-    apt install php8.1-curl php8.1-xml php8.1-imagick php8.1-mbstring php8.1-zip php8.1-intl php-fdomdocument php8.1-gd php8.1-intl -y || { echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"; exit 1; }
-  elif [[ $php_version == "8.0" ]]; then
-    apt install php8.0-curl php8.0-xml php8.0-imagick php8.0-mbstring php8.0-zip php8.0-intl php-fdomdocument php8.0-gd php8.0-intl -y || { echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"; exit 1; }
-  elif [[ $php_version == "7.4" ]]; then
-    apt install php7.4-curl php7.4-xml php7.4-imagick php7.4-mbstring php7.4-zip php7.4-intl php-fdomdocument php7.4-gd php7.4-intl -y || { echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"; exit 1; }
-  else
-    echo -e "${YELLOW}Versione di PHP non supportata. Installa manualmente i pacchetti aggiuntivi corrispondenti.${RESET}"
-  fi
+  apt install \
+  php${php_version}-curl \
+  php${php_version}-xml \
+  php${php_version}-imagick \
+  php${php_version}-mbstring \
+  php${php_version}-zip \
+  php${php_version}-intl \
+  php-fdomdocument \
+  php${php_version}-gd \
+  php${php_version}-intl \
+  -y || {
+    echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"
+    exit 1
+  }
 
   # ==================================================
   # CERTBOT
@@ -159,10 +164,12 @@ installa_sito() {
   read -p "Nome utente: " db_user
 
   echo -e "Inserisci la password per l'utente del database:"
-  read -p "Password: " db_password
+  read -s "Password: " db_password
+  echo  # Linea vuota per migliorare la leggibilità
 
   echo -e "Inserisci la password ROOT per il database:"
-  read -p "Password: " db_root_password
+  read -s "Password: " db_root_password
+  echo  # Linea vuota per migliorare la leggibilità
 
   # Chiedi se creare un sito WordPress
   echo -e "Vuoi creare un sito WordPress? (y/n)"
