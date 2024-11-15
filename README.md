@@ -52,7 +52,10 @@ Lo script offre un'interfaccia a menu con le seguenti opzioni:
 3. Imposta permessi WP:
     Configura correttamente i permessi di sicurezza per un sito WordPress.
 
-4. Esci:
+4. Disinstalla sito:
+    Rimuove un VirtualHost Apache, il database MySQL e i file del sito specificato.
+
+5. Esci:
     Termina l'esecuzione dello script.
 
 ## Dettagli Tecnici

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.4
+# Versione 1.5
 # Testato su Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
@@ -44,10 +44,10 @@ mostra_menu() {
   echo -e "1) Installa Server LAMP    - Installa Apache, MySQL, PHP e Certbot"
   echo -e "2) Crea un sito            - Configura un VirtualHost e un database MySQL per un dominio"
   echo -e "3) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
-  echo -e "4) Esci                    - Esci dallo script"
+  echo -e "4) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
+  echo -e "5) Esci                    - Esci dallo script"
   echo -e "============================"
   echo -e "${RESET}"
-
 }
 
 # Funzione per installare il server LAMP
@@ -228,10 +228,10 @@ EOF
   chmod -R g+rw /var/www/$domain
 
   # Creazione del database MariaDB
-  mysql -uroot -p$db_root_password -e "CREATE DATABASE $database;" || { echo -e "${RED}Errore nella creazione del database${RESET}"; exit 1; }
-  mysql -uroot -p$db_root_password -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Errore nella creazione dell'utente MySQL${RESET}"; exit 1; }
-  mysql -uroot -p$db_root_password -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Errore nell'assegnazione dei permessi all'utente MySQL${RESET}"; exit 1; }
-  mysql -uroot -p$db_root_password -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Errore nel flush dei permessi${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "CREATE DATABASE $database;" || { echo -e "${RED}Errore nella creazione del database${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Errore nella creazione dell'utente MySQL${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Errore nell'assegnazione dei permessi all'utente MySQL${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Errore nel flush dei permessi${RESET}"; exit 1; }
 
   # Aggiungi il dominio a /etc/hosts
   echo -e "127.0.0.1 $domain" | tee -a /etc/hosts
@@ -250,6 +250,51 @@ EOF
     echo -e "${GREEN}Il sito è stato creato nella cartella $doc_root${RESET}"
   fi
 
+}
+
+disinstalla_sito() {
+  echo -e "Inserisci il nome del dominio da rimuovere (esempio.com oppure sub.esempio.com):"
+  read -p "Dominio: " domain
+
+  # Verifica se il dominio esiste, altrimenti esce
+  if [ ! -f /etc/apache2/sites-available/$domain.conf ]; then
+    echo -e "${RED}Il dominio inserito non esiste${RESET}"
+    exit
+  fi
+
+  # Chiedi all'utente se vuole rimuovere il database
+  read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
+  echo
+
+  # Rimuovi il database se richiesto
+  if [[ "$remove_db" == "y" || "$remove_db" == "Y" ]]; then
+    echo -e "Inserisci il nome del database da rimuovere:"
+    read -p "Nome del database: " database
+    mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; exit 1; }
+    echo -e "${GREEN}Il database $database è stato rimosso.${RESET}"
+  fi
+
+  # Rimuovi il VirtualHost
+  a2dissite $domain.conf
+  rm /etc/apache2/sites-available/$domain.conf
+  rm /etc/apache2/sites-enabled/$domain.conf
+  rm /etc/apache2/sites-available/$domain-ssl.conf
+  rm /etc/apache2/sites-enabled/$domain-ssl.conf
+
+  # Rimuovi i log
+  rm /var/log/apache2/$domain-access.log
+  rm /var/log/apache2/$domain-error.log
+
+  # Rimuovi il dominio da /etc/hosts
+  sed -i "/$domain/d" /etc/hosts
+
+  # Rimuovi la cartella DocumentRoot
+  rm -rf /var/www/$domain
+
+  # Riavvia Apache per applicare le modifiche
+  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
+
+  echo -e "${GREEN}Il sito $domain è stato rimosso.${RESET}"
 }
 
 permessi_wordpress() {
@@ -314,6 +359,9 @@ esegui_azione() {
       permessi_wordpress
       ;;
     4)
+      disinstalla_sito
+      ;;
+    5)
       echo -e "Uscita dal programma."
       exit 0
       ;;
