@@ -17,18 +17,19 @@
 mostra_menu() {
   ## Se lo script non è lanciato come root, esci
   if [ "$EUID" -ne 0 ]; then
-    echo "Devi eseguire lo script come root"
+    echo "\033[31mDevi eseguire lo script come root\033[0m"
     exit 1
   fi
 
   # se il file stesso non non è di proprietà di root e non ha i permessi 700, esci
   if [ "$(stat -c %U $0)" != "root" ] || [ "$(stat -c %a $0)" != "700" ]; then
     path_script=$(realpath $0)
-    echo "Lo script deve essere di proprietà di root e avere i permessi 700 per essere eseguito in sicurezza:"
-    echo "Esegui: sudo chown root:root $path_script && sudo chmod 700 $path_script"
+    echo "\033[31mLo script deve essere di proprietà di root e avere i permessi 700 per essere eseguito in sicurezza:\033[0m"
+    echo "Esegui: \033[34msudo chown root:root $path_script && sudo chmod 700 $path_script\033[0m"
     exit 1
   fi
 
+  echo "\033[35m"
   echo "============================"
   echo "         MENU              "
   echo "============================"
@@ -37,28 +38,29 @@ mostra_menu() {
   echo "3) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
   echo "4) Esci                    - Esci dallo script"
   echo "============================"
+  echo "\033[0m"
 
 }
 
 # Funzione per installare il server LAMP
 installa_lamp() {
   # Aggiorna il sistema
-  apt update || { echo "Errore nell'aggiornamento dei pacchetti"; exit 1; }
+  apt update || { echo -e "\033[31mErrore nell'aggiornamento dei pacchetti\033[0m"; exit 1; }
 
   # ==================================================
   # APACHE
   # ==================================================
   # Verifica se Apache è già installato, se non lo è, installalo
   if ! [ -x "$(command -v apache2)" ]; then
-    apt install apache2 -y || { echo "Errore nell'installazione di Apache"; exit 1; }
+    apt install apache2 -y || { echo "\033[31mErrore nell'installazione di Apache\033[0m"; exit 1; }
     # Abilita Apache nel firewall
     ufw allow in "Apache"
     # Abilita mod_rewrite
-    a2enmod rewrite || { echo "Errore nell'abilitazione di mod_rewrite"; exit 1; }
+    a2enmod rewrite || { echo "\033[31mErrore nell'abilitazione di mod_rewrite\033[0m"; exit 1; }
     systemctl restart apache2
-    echo "Apache installato e configurato."
+    echo "\033[32mApache installato e configurato.\033[0m"
   else
-    echo "Apache è già installato."
+    echo "\033[33mApache è già installato.\033[0m"
   fi
 
   # ==================================================
@@ -66,12 +68,12 @@ installa_lamp() {
   # ==================================================
   # Verifica se MySQL è già installato, se non lo è, installalo
   if ! [ -x "$(command -v mysql)" ]; then
-    apt install mysql-server -y || { echo "Errore nell'installazione di MySQL"; exit 1; }
+    apt install mysql-server -y || { echo "\033[31mErrore nell'installazione di MySQL\033[0m"; exit 1; }
     # Richiedi all'utente di inserire la nuova password
     read -s -p "Inserisci la password per l'utente root di MySQL: " new_password
     echo
     # Configura MySQL
-    mysql -u root -p -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$new_password';" || { echo "Errore nella configurazione di MySQL"; exit 1; }
+    mysql -u root -p -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$new_password';" || { echo "\033[31mErrore nella configurazione di MySQL\033[0m"; exit 1; }
     mysql_secure_installation <<EOF
 $new_password
 n
@@ -80,9 +82,9 @@ y
 y
 y
 EOF
-    echo "MySQL installato e configurato."
+    echo "\033[32mMySQL installato e configurato.\033[0m"
   else
-    echo "MySQL è già installato."
+    echo "\033[33mMySQL è già installato.\033[0m"
   fi
 
   # ==================================================
@@ -91,22 +93,22 @@ EOF
   # Verifica se PHP è già installato
   if [ -x "$(command -v php)" ]; then
     php_version=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
-    echo "PHP versione $php_version già installata."
+    echo "\033[33mPHP versione $php_version già installata.\033[0m"
   else
-    apt install php libapache2-mod-php php-mysql -y || { echo "Errore nell'installazione di PHP"; exit 1; }
+    apt install php libapache2-mod-php php-mysql -y || { echo "\033[31mErrore nell'installazione di PHP"; exit 1; }
     php_version=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
-    echo "PHP versione $php_version installata."
+    echo "\033[32mPHP versione $php_version installata.\033[0m"
   fi
 
   # Installa i pacchetti aggiuntivi in base alla versione di PHP
   if [[ $php_version == "8.1" ]]; then
-    apt install php8.1-curl php8.1-xml php8.1-imagick php8.1-mbstring php8.1-zip php8.1-intl php-fdomdocument php8.1-gd php8.1-intl -y || { echo "Errore nell'installazione dei pacchetti aggiuntivi di PHP"; exit 1; }
+    apt install php8.1-curl php8.1-xml php8.1-imagick php8.1-mbstring php8.1-zip php8.1-intl php-fdomdocument php8.1-gd php8.1-intl -y || { echo "\033[31mErrore nell'installazione dei pacchetti aggiuntivi di PHP\033[0m"; exit 1; }
   elif [[ $php_version == "8.0" ]]; then
-    apt install php8.0-curl php8.0-xml php8.0-imagick php8.0-mbstring php8.0-zip php8.0-intl php-fdomdocument php8.0-gd php8.0-intl -y || { echo "Errore nell'installazione dei pacchetti aggiuntivi di PHP"; exit 1; }
+    apt install php8.0-curl php8.0-xml php8.0-imagick php8.0-mbstring php8.0-zip php8.0-intl php-fdomdocument php8.0-gd php8.0-intl -y || { echo "\033[31mErrore nell'installazione dei pacchetti aggiuntivi di PHP\033[0m"; exit 1; }
   elif [[ $php_version == "7.4" ]]; then
-    apt install php7.4-curl php7.4-xml php7.4-imagick php7.4-mbstring php7.4-zip php7.4-intl php-fdomdocument php7.4-gd php7.4-intl -y || { echo "Errore nell'installazione dei pacchetti aggiuntivi di PHP"; exit 1; }
+    apt install php7.4-curl php7.4-xml php7.4-imagick php7.4-mbstring php7.4-zip php7.4-intl php-fdomdocument php7.4-gd php7.4-intl -y || { echo "\033[31mErrore nell'installazione dei pacchetti aggiuntivi di PHP\033[0m"; exit 1; }
   else
-    echo "Versione di PHP non supportata. Installa manualmente i pacchetti aggiuntivi corrispondenti."
+    echo "\033[33mVersione di PHP non supportata. Installa manualmente i pacchetti aggiuntivi corrispondenti.\033[0m"
   fi
 
   # ==================================================
@@ -114,34 +116,34 @@ EOF
   # ==================================================
   # Verifica se Certbot è già installato
   if ! [ -x "$(command -v certbot)" ]; then
-    apt install certbot python3-certbot-apache -y || { echo "Errore nell'installazione di Certbot"; exit 1; }
-    echo "Certbot per Apache installato."
+    apt install certbot python3-certbot-apache -y || { echo "\033[31mErrore nell'installazione di Certbot\033[0m"; exit 1; }
+    echo "\033[32mCertbot per Apache installato.\033[0m"
   else
-    echo "Certbot è già installato."
+    echo "\033[33mCertbot è già installato.\033[0m"
   fi
 
-  echo "Installazione del server LAMP e Certbot completata."
+  echo "\033[32mInstallazione del server LAMP e Certbot completata.\033[0m"
 }
 
 # Funzione per installare un sito Wordpress
 installa_sito() {
   # Verifica se il server LAMP è installato
   if ! [ -x "$(command -v apache2)" ] || ! [ -x "$(command -v mysql)" ] || ! [ -x "$(command -v php)" ]; then
-    echo "Il server LAMP non è installato. Installalo prima di procedere."
+    echo "\033[33mIl server LAMP non è installato. Installalo prima di procedere.\033[0m"
     exit 1
   fi
 
   echo "Inserisci il nome del dominio (esempio.com oppure sub.esempio.com):"
   read -p "Dominio: " domain
   if [ -f /etc/apache2/sites-available/$domain.conf ]; then
-    echo "Il dominio esiste già!"
+    echo "\033[33mIl dominio esiste già!\033[0m"
     exit
   fi
 
   echo "Inserisci il nome del database (esempio_db):"
   read -p "Nome del database: " database
   if [ -d /var/lib/mysql/$database ]; then
-    echo "Il database esiste già!"
+    echo "\033[33mIl database esiste già!\033[0m"
     exit
   fi
 
@@ -197,7 +199,7 @@ EOF
   # Scarica e decomprimi WordPress solo se richiesto
   if $wordpress_download; then
     sudo wget -P /var/www/$domain https://wordpress.org/latest.zip
-    sudo apt-get install -y unzip || { echo "Errore nell'installazione di unzip"; exit 1; }
+    sudo apt-get install -y unzip || { echo "\033[31mErrore nell'installazione di unzip"; exit 1; }
     sudo unzip /var/www/$domain/latest.zip -d /var/www/$domain
     sudo rm /var/www/$domain/latest.zip
     sudo chown -R www-data:www-data /var/www/$domain/wordpress
@@ -220,9 +222,9 @@ EOF
   fi
 
   if $wordpress_download; then
-    echo "WordPress è stato scaricato e configurato nella cartella $doc_root"
+    echo "\033[32mWordPress è stato scaricato e configurato nella cartella $doc_root\033[0m"
   else
-    echo "Il sito è stato creato nella cartella $doc_root"
+    echo "\033[32mIl sito è stato creato nella cartella $doc_root\033[0m"
   fi
 
 }
@@ -233,7 +235,7 @@ permessi_wordpress() {
 
   # Verifica se il dominio esiste, altrimenti esce
   if [ ! -d "/var/www/$domain" ]; then
-    echo "Il dominio inserito non esiste"
+    echo "\033[31mIl dominio inserito non esiste\033[0m"
     exit
   fi
 
@@ -270,9 +272,9 @@ permessi_wordpress() {
   ### ESITO ###
   # Se non ci sono errori, mostra un messaggio di successo
   if [ $? -eq 0 ]; then
-    echo "I permessi sono stati impostati correttamente. $MSG"
+    echo "\033[32mI permessi sono stati impostati correttamente. $MSG\033[0m"
   else
-    echo "Si è verificato un errore durante l'impostazione dei permessi"
+    echo "\033[31mSi è verificato un errore durante l'impostazione dei permessi\033[0m"
   fi
 }
 
