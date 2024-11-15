@@ -1,7 +1,7 @@
 # WebServer Manager Script
 
 ![Versione](https://img.shields.io/badge/Versione-1.4-blue)
-![Testato su](https://img.shields.io/badge/Testato%20su-Ubuntu%2022.04%20LTS-orange)
+![Testato su](https://img.shields.io/badge/Testato%20su-Ubuntu%2022.04%20LTS-violet)
 ![Licenza](https://img.shields.io/badge/Licenza-MIT-green)
 
 Script Bash per automatizzare l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su Ubuntu 22.04 LTS. Consente di configurare rapidamente un ambiente di hosting completo con supporto per siti WordPress, gestione dei permessi e sicurezza MySQL di base.
