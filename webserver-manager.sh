@@ -160,20 +160,23 @@ installa_sito() {
     exit
   fi
 
-  echo -e "Inserisci le credenziali dell'utente del database (esempio_user):"
-  read -p "Nome utente: " db_user
+  # Chiedi all'utente di inserire le credenziali del database
+  echo -e "Inserisci l'username dell'utente del database:"
+  read -p "Nome utente:" db_user
 
-  echo -e "Inserisci la password per l'utente del database:"
-  read -s "Password: " db_password
-  echo  # Linea vuota per migliorare la leggibilità
+  # Chiedi all'utente di inserire la password del database
+  echo "Inserisci la password per l'utente del database:"
+  read -s -p "Password:" db_password
+  echo
 
-  echo -e "Inserisci la password ROOT per il database:"
-  read -s "Password: " db_root_password
-  echo  # Linea vuota per migliorare la leggibilità
+  # Chiedi all'utente di inserire la password ROOT per MySQL
+  echo "Inserisci la password ROOT per MySQL:"
+  read -s -p "Root password:" db_root_password
+  echo
 
-  # Chiedi se creare un sito WordPress
-  echo -e "Vuoi creare un sito WordPress? (y/n)"
-  read -p "Risposta: " wordpress_choice
+  # Chiedi all'utente se vuole creare un sito WordPress
+  read -p "Vuoi creare un sito WordPress? (y/n): " -n 1 -r wordpress_choice
+  echo
 
   # Configura la cartella di destinazione e il VirtualHost
   if [[ "$wordpress_choice" == "y" || "$wordpress_choice" == "Y" ]]; then
@@ -185,7 +188,7 @@ installa_sito() {
   fi
 
 # Creazione del file di configurazione di Apache
-sudo tee /etc/apache2/sites-available/$domain.conf <<EOF
+tee /etc/apache2/sites-available/$domain.conf <<EOF
 <VirtualHost *:80>
     ServerName $domain
     ServerAlias www.$domain
@@ -201,40 +204,45 @@ sudo tee /etc/apache2/sites-available/$domain.conf <<EOF
 EOF
 
   # Abilita il nuovo sito
-  sudo a2ensite $domain.conf
+  a2ensite $domain.conf
 
   # Creazione della cartella DocumentRoot
-  sudo mkdir -p /var/www/$domain
-  sudo chown -R www-data:www-data /var/www/$domain
-  sudo chmod -R g+rw /var/www/$domain
+  mkdir -p /var/www/$domain
 
   # Riavvia Apache per applicare le modifiche
-  sudo service apache2 restart
+  service apache2 restart
 
   # Scarica e decomprimi WordPress solo se richiesto
   if $wordpress_download; then
-    sudo wget -P /var/www/$domain https://wordpress.org/latest.zip
-    sudo apt-get install -y unzip || { echo -e "${RED}Errore nell'installazione di unzip"; exit 1; }
-    sudo unzip /var/www/$domain/latest.zip -d /var/www/$domain
-    sudo rm /var/www/$domain/latest.zip
-    sudo chown -R www-data:www-data /var/www/$domain/wordpress
+    wget -P /var/www/$domain https://wordpress.org/latest.zip
+    if ! dpkg -l | grep -q unzip; then
+      sudo apt-get install -y unzip || { echo -e "${RED}Errore nell'installazione di unzip"; exit 1; }
+    fi
+    unzip /var/www/$domain/latest.zip -d /var/www/$domain || { echo -e "${RED}Errore nell'estrazione di WordPress${RESET}"; exit 1; }
+    rm /var/www/$domain/latest.zip
+    chown -R www-data:www-data /var/www/$domain/wordpress
   fi
 
-# Creazione del database MariaDB
-sudo mysql -uroot -p$db_root_password <<EOF
-CREATE DATABASE $database;
-CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';
-GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';
-FLUSH PRIVILEGES;
-EOF
+  # Imposta i permessi della cartella DocumentRoot
+  chown -R www-data:www-data /var/www/$domain
+  chmod -R g+rw /var/www/$domain
+
+  # Creazione del database MariaDB
+  mysql -uroot -p$db_root_password -e "CREATE DATABASE $database;" || { echo -e "${RED}Errore nella creazione del database${RESET}"; exit 1; }
+  mysql -uroot -p$db_root_password -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Errore nella creazione dell'utente MySQL${RESET}"; exit 1; }
+  mysql -uroot -p$db_root_password -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Errore nell'assegnazione dei permessi all'utente MySQL${RESET}"; exit 1; }
+  mysql -uroot -p$db_root_password -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Errore nel flush dei permessi${RESET}"; exit 1; }
 
   # Aggiungi il dominio a /etc/hosts
-  echo -e "127.0.0.1 $domain" | sudo tee -a /etc/hosts
+  echo -e "127.0.0.1 $domain" | tee -a /etc/hosts
 
   # Riavvia cloudflared se installato
   if [ -f /usr/local/bin/cloudflared ]; then
-    sudo cloudflared service restart
+    cloudflared service restart
   fi
+
+  # Riavvia Apache per applicare le modifiche
+  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
 
   if $wordpress_download; then
     echo -e "${GREEN}WordPress è stato scaricato e configurato nella cartella $doc_root${RESET}"
