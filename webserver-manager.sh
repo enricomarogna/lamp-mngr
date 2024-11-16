@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.5
+# Versione 1.6.0
 # Testato su Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
@@ -45,7 +45,8 @@ mostra_menu() {
   echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
   echo -e "3) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
   echo -e "4) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
-  echo -e "5) Esci                    - Esci dallo script"
+  echo -e "5) Lista siti              - Mostra l'elenco dei siti presenti"
+  echo -e "6) Esci                    - Esci dallo script"
   echo -e "============================"
   echo -e "${RESET}"
 }
@@ -253,15 +254,35 @@ EOF
 }
 
 disinstalla_sito() {
-  echo -e "Inserisci il nome del dominio da rimuovere (esempio.com oppure sub.esempio.com):"
-  read -p "Dominio: " domain
-
-  # Verifica se il file di configurazione del sito esiste
-  conf_file="/etc/apache2/sites-available/$domain.conf"
-  if [ ! -f "$conf_file" ]; then
-    echo -e "${RED}Il dominio inserito non esiste.${RESET}"
+  # Elenca tutti i file di configurazione dei siti disponibili
+  echo -e "Ecco l'elenco dei siti disponibili:\n"
+  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//'))
+  
+  if [ ${#sites[@]} -eq 0 ]; then
+    echo -e "${RED}Non ci sono siti disponibili da rimuovere.${RESET}"
     exit 1
   fi
+
+  # Mostra i siti con numerazione
+  for i in "${!sites[@]}"; do
+    echo "$((i + 1)). ${sites[i]}"
+  done
+
+  # Chiede all'utente di scegliere un sito
+  echo -e "\nInserisci il numero del sito da rimuovere:"
+  read -p "Numero: " site_number
+
+  # Verifica se l'input è valido
+  if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
+    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    exit 1
+  fi
+
+  # Ottiene il nome del dominio scelto
+  domain="${sites[$((site_number - 1))]}"
+  conf_file="/etc/apache2/sites-available/$domain.conf"
+
+  echo -e "Hai selezionato il dominio: $domain"
 
   # Estrai il DocumentRoot dal file di configurazione di Apache
   document_root=$(grep -i "DocumentRoot" "$conf_file" | awk '{print $2}')
@@ -282,7 +303,7 @@ disinstalla_sito() {
   fi
 
   # Rimuovi il VirtualHost
-  a2dissite $domain.conf
+  a2dissite "$domain.conf"
   rm "$conf_file"
   [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && rm "/etc/apache2/sites-enabled/$domain.conf"
 
@@ -319,7 +340,6 @@ disinstalla_sito() {
 
   echo -e "${GREEN}Il sito $domain è stato rimosso con successo.${RESET}"
 }
-
 
 permessi_wordpress() {
   echo -e "Inserisci il nome del dominio per cui vuoi settare i permessi (esempio.com oppure sub.esempio.com):"
@@ -370,6 +390,21 @@ permessi_wordpress() {
   fi
 }
 
+# Funzione per ottenere la lista dei siti presenti
+lista_siti() {
+  # Verifica che la directory dei file di configurazione esista
+  if [ -d /etc/apache2/sites-available ]; then
+    echo -e "Elenco dei siti presenti:"
+    # Elenca i file nella directory, rimuovi l'estensione ".conf" per ottenere solo i nomi dei domini
+    for site in /etc/apache2/sites-available/*.conf; do
+      # Estrai solo il nome del sito, rimuovendo il percorso e l'estensione
+      basename "$site" .conf
+    done
+  else
+    echo -e "${RED}La directory /etc/apache2/sites-available non esiste.${RESET}"
+  fi
+}
+
 # Funzione per eseguire le azioni
 esegui_azione() {
   case $1 in
@@ -386,6 +421,9 @@ esegui_azione() {
       permessi_wordpress
       ;;
     5)
+      lista_siti
+      ;;
+    6)
       echo -e "Uscita dal programma."
       exit 0
       ;;
@@ -398,6 +436,6 @@ esegui_azione() {
 # Loop principale
 while true; do
   mostra_menu
-  read -p "Seleziona un'opzione (1-5): " scelta
+  read -p "Seleziona un'opzione (1-6): " scelta
   esegui_azione $scelta
 done
