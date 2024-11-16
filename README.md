@@ -112,6 +112,6 @@ Distribuito sotto la licenza MIT. Consulta il file LICENSE per maggiori dettagli
 Puoi modificarlo ulteriormente per aggiungere dettagli specifici o link utili.
 
 # Supporta lo Sviluppo
-Puoi supportare lo sviluppo di questo script con una donazione tramite PayPal. Grazie per il tuo supporto!
+Puoi supportare lo sviluppo di questo progetto con una donazione su Ko-fi.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8166X59)
