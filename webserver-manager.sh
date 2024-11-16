@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.6.0
+# Versione 1.7.0
 # Testato su Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
@@ -45,8 +45,9 @@ mostra_menu() {
   echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
   echo -e "3) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
   echo -e "4) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
-  echo -e "5) Lista siti              - Mostra l'elenco dei siti presenti"
-  echo -e "6) Esci                    - Esci dallo script"
+  echo -e "5) Genera certificato SSL  - Genera un certificato SSL per un sito"
+  echo -e "6) Lista siti              - Mostra l'elenco dei siti presenti"
+  echo -e "7) Esci                    - Esci dallo script"
   echo -e "============================"
   echo -e "${RESET}"
 }
@@ -390,6 +391,50 @@ permessi_wordpress() {
   fi
 }
 
+genera_certificato() {
+  # Verifica se Certbot è installato, altrimenti esci
+  if ! [ -x "$(command -v certbot)" ]; then
+    echo -e "${RED}Certbot non è installato. Installalo prima di procedere.${RESET}"
+    exit 1
+  fi
+
+  # Mostar elenco dei domini e chiedere all'utente di sceglierne uno per cui generare il certificato
+  echo -e "Ecco l'elenco dei siti disponibili:\n"
+  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//'))
+
+  if [ ${#sites[@]} -eq 0 ]; then
+    echo -e "${RED}Non ci sono siti disponibili per generare un certificato.${RESET}"
+    exit 1
+  fi
+
+  # Mostra i siti con numerazione
+  for i in "${!sites[@]}"; do
+    echo "$((i + 1)). ${sites[i]}"
+  done
+
+  # Chiedi all'utente di scegliere un sito
+  echo -e "\nInserisci il numero del sito per cui generare il certificato:"
+  read -p "Numero: " site_number
+
+  # Verifica se l'input è valido
+  if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
+    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    exit 1
+  fi
+
+  # Ottiene il nome del dominio scelto
+  domain="${sites[$((site_number - 1))]}"
+  echo -e "Hai selezionato il dominio: $domain"
+
+  # Genera il certificato SSL
+  certbot --apache -d $domain
+
+  # Riavvia Apache per applicare le modifiche
+  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
+
+  echo -e "${GREEN}Il certificato SSL per $domain è stato generato con successo.${RESET}"
+}
+
 # Funzione per ottenere la lista dei siti presenti
 lista_siti() {
   # Verifica che la directory dei file di configurazione esista
@@ -421,9 +466,12 @@ esegui_azione() {
       permessi_wordpress
       ;;
     5)
-      lista_siti
+      genera_certificato
       ;;
     6)
+      lista_siti
+      ;;
+    7)
       echo -e "Uscita dal programma."
       exit 0
       ;;
