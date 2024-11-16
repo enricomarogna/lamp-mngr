@@ -9,8 +9,8 @@
 # configurare un sito WordPress con permessi di sicurezza appropriati. Controlla e imposta le configurazioni necessarie,
 # come i permessi di file e l'uso di moduli Apache. Include anche una gestione basilare della sicurezza MySQL.
 # È consigliato eseguire lo script con privilegi di root per garantire che tutte le operazioni vengano effettuate correttamente:
-# "sudo chown root:root webserver_manager.sh && sudo chmod 700 webserver_manager.sh"
-# Per eseguire lo script, digitare "sudo ./webserver_manager.sh"
+# "sudo chown root:root lamp-mngr.sh && sudo chmod 700 lamp-mngr.sh"
+# Per eseguire lo script, digitare "sudo ./lamp-mngr.sh"
 # ---------------------------------------------------------
 
 # COLORS

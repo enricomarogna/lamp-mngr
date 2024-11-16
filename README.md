@@ -40,20 +40,20 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 
 1. **Clona o scarica lo script**:  
    ```bash
-   git clone https://github.com/tuo-utente/webserver-manager.git
+   git clone https://github.com/enricomarogna/lamp-mngr.git
    cd webserver-manager
 
 2. Assegna i permessi di esecuzione allo script:
 
    ```bash
-   sudo chown root:root webserver_manager.sh
-   sudo chmod 700 webserver_manager.sh
+   sudo chown root:root lamp-mngr.sh
+   sudo chmod 700 lamp-mngr.sh
    ```
 
 3. Esegui lo script:
    
    ```bash
-   sudo ./webserver_manager.sh
+   sudo ./lamp-mngr.sh
    ```
 
 ## Menu Principale
