@@ -45,6 +45,7 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 2. Assegna i permessi di esecuzione e sicurezza allo script:
 
    ```bash
+   chmod +x lamp-mngr.sh
    sudo chown root:root lamp-mngr.sh
    sudo chmod 700 lamp-mngr.sh
    ```
