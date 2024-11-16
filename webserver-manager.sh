@@ -42,9 +42,9 @@ mostra_menu() {
   echo -e "         MENU              "
   echo -e "============================"
   echo -e "1) Installa Server LAMP    - Installa Apache, MySQL, PHP e Certbot"
-  echo -e "2) Crea un sito            - Configura un VirtualHost e un database MySQL per un dominio"
-  echo -e "3) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
-  echo -e "4) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
+  echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
+  echo -e "3) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
+  echo -e "4) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
   echo -e "5) Esci                    - Esci dallo script"
   echo -e "============================"
   echo -e "${RESET}"
@@ -256,11 +256,18 @@ disinstalla_sito() {
   echo -e "Inserisci il nome del dominio da rimuovere (esempio.com oppure sub.esempio.com):"
   read -p "Dominio: " domain
 
-  # Verifica se il dominio esiste, altrimenti esce
-  if [ ! -f /etc/apache2/sites-available/$domain.conf ]; then
-    echo -e "${RED}Il dominio inserito non esiste${RESET}"
-    exit
+  # Verifica se il file di configurazione del sito esiste
+  conf_file="/etc/apache2/sites-available/$domain.conf"
+  if [ ! -f "$conf_file" ]; then
+    echo -e "${RED}Il dominio inserito non esiste.${RESET}"
+    exit 1
   fi
+
+  # Estrai il DocumentRoot dal file di configurazione di Apache
+  document_root=$(grep -i "DocumentRoot" "$conf_file" | awk '{print $2}')
+  # Estrai i file di log dal file di configurazione di Apache
+  access_log=$(grep -i "CustomLog" "$conf_file" | awk '{print $2}' | head -n 1)
+  error_log=$(grep -i "ErrorLog" "$conf_file" | awk '{print $2}' | head -n 1)
 
   # Chiedi all'utente se vuole rimuovere il database
   read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
@@ -276,26 +283,43 @@ disinstalla_sito() {
 
   # Rimuovi il VirtualHost
   a2dissite $domain.conf
-  rm /etc/apache2/sites-available/$domain.conf
-  rm /etc/apache2/sites-enabled/$domain.conf
-  rm /etc/apache2/sites-available/$domain-ssl.conf
-  rm /etc/apache2/sites-enabled/$domain-ssl.conf
+  rm "$conf_file"
+  [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && rm "/etc/apache2/sites-enabled/$domain.conf"
 
-  # Rimuovi i log
-  rm /var/log/apache2/$domain-access.log
-  rm /var/log/apache2/$domain-error.log
+  # Verifica se esiste un file di configurazione SSL
+  ssl_conf_file="/etc/apache2/sites-available/$domain-ssl.conf"
+  if [ -f "$ssl_conf_file" ]; then
+    rm "$ssl_conf_file"
+    [ -f "/etc/apache2/sites-enabled/$domain-ssl.conf" ] && rm "/etc/apache2/sites-enabled/$domain-ssl.conf"
+  fi
+
+  # Rimuovi i file di log
+  if [ -n "$access_log" ] && [ -f "$access_log" ]; then
+    rm "$access_log"
+    echo -e "${GREEN}Il file di log degli accessi è stato rimosso: $access_log${RESET}"
+  fi
+  if [ -n "$error_log" ] && [ -f "$error_log" ]; then
+    rm "$error_log"
+    echo -e "${GREEN}Il file di log degli errori è stato rimosso: $error_log${RESET}"
+  fi
 
   # Rimuovi il dominio da /etc/hosts
   sed -i "/$domain/d" /etc/hosts
 
   # Rimuovi la cartella DocumentRoot
-  rm -rf /var/www/$domain
+  if [ -n "$document_root" ] && [ -d "$document_root" ]; then
+    rm -rf "$document_root"
+    echo -e "${GREEN}La cartella DocumentRoot è stata rimossa: $document_root${RESET}"
+  else
+    echo -e "${YELLOW}La cartella DocumentRoot non è stata trovata o non esiste: $document_root${RESET}"
+  fi
 
   # Riavvia Apache per applicare le modifiche
   service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
 
-  echo -e "${GREEN}Il sito $domain è stato rimosso.${RESET}"
+  echo -e "${GREEN}Il sito $domain è stato rimosso con successo.${RESET}"
 }
+
 
 permessi_wordpress() {
   echo -e "Inserisci il nome del dominio per cui vuoi settare i permessi (esempio.com oppure sub.esempio.com):"
@@ -356,10 +380,10 @@ esegui_azione() {
       installa_sito
       ;;
     3)
-      permessi_wordpress
+      disinstalla_sito
       ;;
     4)
-      disinstalla_sito
+      permessi_wordpress
       ;;
     5)
       echo -e "Uscita dal programma."
