@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.8.0
+# Versione 1.9.0
 # Testato su Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
@@ -136,9 +136,8 @@ EOF
   php${php_version}-mbstring \
   php${php_version}-zip \
   php${php_version}-intl \
-  php-fdomdocument \
   php${php_version}-gd \
-  php${php_version}-intl \
+  php-fdomdocument \
   -y || {
     echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"
     exit 1

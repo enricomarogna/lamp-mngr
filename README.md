@@ -1,10 +1,8 @@
 # LAMP Manager Script
 
-![Versione](https://img.shields.io/badge/Versione-1.4-blue)
+![Versione](https://img.shields.io/badge/Versione-1.9.0-blue)
 ![Testato su](https://img.shields.io/badge/Testato%20su-Ubuntu%2022.04%20LTS-violet)
 ![Licenza](https://img.shields.io/badge/Licenza-MIT-green)
-
-
 
 ```
    ██▓    ▄▄▄       ███▄ ▄███▓ ██▓███   ███▄ ▄███▓ ███▄    █   ▄████  ██▀███
@@ -61,35 +59,28 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 
 Lo script offre un'interfaccia a menu con le seguenti opzioni:
 
-- **Installa Server LAMP**:
-    Installa Apache, MySQL, PHP e Certbot con le configurazioni necessarie.
-
-- **Crea un sito**:
-    Configura un VirtualHost Apache, crea un database MySQL per il dominio specificato e, se richiesto, scarica e configura WordPress.
-
-- **Disinstalla sito**:
-    Rimuove un VirtualHost Apache, il database MySQL e i file del sito specificato.
-
-- **Imposta permessi WP**:
-    Configura correttamente i permessi di sicurezza per un sito WordPress.
-
-- **Genera certificato SSL**:
-    Installa e configura un certificato SSL per un dominio specifico.
-
-- **Lista siti installati**:
-    Visualizza un elenco dei siti installati.
+|#|Opzione|Descrizione|
+|-|-------|-----------|
+|1|**Installa Server LAMP**|Installa Apache, MySQL, PHP e Certbot|
+|2|**Crea un sito**|Crea un VirtualHost Apache e un database MySQL per un sito (con opzione per WordPress)|
+|3|**Disinstalla sito**|Rimuove un sito specifico, inclusi i file, il database, il VirtualHost Apache e i files di log|
+|4|**Imposta permessi WP**|Configura i permessi di sicurezza per un sito WordPress|
+|5|**Genera certificato SSL**|Installa e configura un certificato SSL per un dominio|
+|6|**Lista siti installati**|Visualizza un elenco dei siti installati|
+|7|**Esci**|Chiude lo script|
 
 ## Dettagli Tecnici
 
 - **Apache**: Abilitazione automatica di `mod_rewrite` e configurazione del firewall con `ufw`.
 - **MySQL**: Configurazione della password root, esecuzione automatica di `mysql_secure_installation`, e - creazione di database e utenti.
-- **PHP**: Verifica della versione di PHP installata e installazione dei moduli necessari.
+- **PHP**: Verifica della versione di PHP installata e installazione dei moduli necessari, tra cui `php-curl`, `php-gd`, `php-mbstring`, `php-xml`, `php-zip`, `php-imagick`, `php-intl` e `php-fdomdocument`
 - **Certbot**: Installazione per la gestione automatizzata di certificati SSL.
 
 ## Sicurezza
 
 - Lo script controlla che venga eseguito con privilegi di root e che i permessi siano corretti (700) per garantire la sicurezza.
 - MySQL viene configurato con password sicure e vengono eseguite operazioni di sicurezza di base per limitare le vulnerabilità.
+- **Lo script è in fase Beta e potrebbe contenere errori o bug. Si consiglia di eseguirlo in un ambiente di test prima di utilizzarlo in produzione!**
 
 ## Note Importanti
 
