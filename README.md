@@ -27,9 +27,8 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 - **Configurazione di un sito WordPress**: Scarica, decomprime e configura WordPress con i permessi di sicurezza adeguati.
 - **Gestione Permessi WordPress**: Configura correttamente i permessi di file e cartelle per una maggiore sicurezza.
 - **Disinstallazione di un sito**: Rimuove un sito specifico, inclusi il VirtualHost Apache, il database MySQL e i file del sito.
-- **Certificati SSL**: Installa e configura Certbot per la gestione automatizzata dei certificati SSL.
-- **Lista Siti Installati**: Visualizza un elenco dei siti installati e i relativi percorsi.
-- **Sicurezza MySQL**: Include l'installazione e la configurazione di base di MySQL, con l'opzione di configurare una password sicura per l'utente `root`.
+- **Certificati SSL**: Installa e configura certificati SSL per i domini specificati.
+- **Lista Siti Installati**: Visualizza l'elenco dei siti installati.
 
 ## Requisiti
 
@@ -38,14 +37,14 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 
 ## Istruzioni per l'uso
 
-1. **Clona o scarica lo script**:  
+1. Clona o scarica lo script:  
 
    ```bash
    git clone https://github.com/enricomarogna/lamp-mngr.git
-   cd webserver-manager
+   cd lamp-mngr
     ```
 
-2. Assegna i permessi di esecuzione allo script:
+2. Assegna i permessi di esecuzione e sicurezza allo script:
 
    ```bash
    sudo chown root:root lamp-mngr.sh
@@ -62,33 +61,30 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 
 Lo script offre un'interfaccia a menu con le seguenti opzioni:
 
-1. Installa Server LAMP:
-   Installa Apache, MySQL, PHP e Certbot con le configurazioni necessarie.
+- **Installa Server LAMP**:
+    Installa Apache, MySQL, PHP e Certbot con le configurazioni necessarie.
 
-2. Crea un sito:
+- **Crea un sito**:
     Configura un VirtualHost Apache, crea un database MySQL per il dominio specificato e, se richiesto, scarica e configura WordPress.
 
-3. Disinstalla sito:
+- **Disinstalla sito**:
     Rimuove un VirtualHost Apache, il database MySQL e i file del sito specificato.
 
-4. Imposta permessi WP:
+- **Imposta permessi WP**:
     Configura correttamente i permessi di sicurezza per un sito WordPress.
 
-5. Genera certificato SSL:
+- **Genera certificato SSL**:
     Installa e configura un certificato SSL per un dominio specifico.
 
-6. Lista siti installati:
+- **Lista siti installati**:
     Visualizza un elenco dei siti installati.
-
-7. Esci:
-    Termina l'esecuzione dello script.
 
 ## Dettagli Tecnici
 
-- Apache: Abilitazione automatica di mod_rewrite e configurazione del firewall con ufw.
-- MySQL: Configurazione della password root, esecuzione automatica di mysql_secure_installation, e - creazione di database e utenti.
-- PHP: Verifica della versione di PHP installata e installazione dei moduli necessari.
-- Certbot: Installazione per la gestione automatizzata di certificati SSL.
+- **Apache**: Abilitazione automatica di `mod_rewrite` e configurazione del firewall con `ufw`.
+- **MySQL**: Configurazione della password root, esecuzione automatica di `mysql_secure_installation`, e - creazione di database e utenti.
+- **PHP**: Verifica della versione di PHP installata e installazione dei moduli necessari.
+- **Certbot**: Installazione per la gestione automatizzata di certificati SSL.
 
 ## Sicurezza
 
