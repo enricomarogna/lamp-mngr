@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.7.0
+# Versione 1.8.0
 # Testato su Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
@@ -38,9 +38,9 @@ mostra_menu() {
   fi
 
   echo -e "${PURPLE}"
-  echo -e "============================"
-  echo -e "         MENU              "
-  echo -e "============================"
+  echo -e "========================================================================================"
+  echo -e "                       Web Server Manager - Gestione del server LAMP                    "
+  echo -e "========================================================================================"
   echo -e "1) Installa Server LAMP    - Installa Apache, MySQL, PHP e Certbot"
   echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
   echo -e "3) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
@@ -48,7 +48,7 @@ mostra_menu() {
   echo -e "5) Genera certificato SSL  - Genera un certificato SSL per un sito"
   echo -e "6) Lista siti              - Mostra l'elenco dei siti presenti"
   echo -e "7) Esci                    - Esci dallo script"
-  echo -e "============================"
+  echo -e "========================================================================================"
   echo -e "${RESET}"
 }
 
