@@ -39,10 +39,11 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 ## Istruzioni per l'uso
 
 1. **Clona o scarica lo script**:  
+
    ```bash
    git clone https://github.com/enricomarogna/lamp-mngr.git
    cd webserver-manager
-```
+    ```
 
 2. Assegna i permessi di esecuzione allo script:
 
