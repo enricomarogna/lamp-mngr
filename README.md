@@ -43,8 +43,8 @@ Lo script è in fase Beta e potrebbe contenere errori o bug. Si consiglia di ese
 1. Scarica lo script sul tuo server Ubuntu: 
 
    ```bash
-   wget https://github.com/enricomarogna/lamp-mngr/blob/main/lamp-mngr.sh
-    ```
+   wget https://raw.githubusercontent.com/enricomarogna/lamp-mngr/refs/heads/main/lamp-mngr.sh
+   ```
 
 2. Assegna i permessi di esecuzione e sicurezza allo script:
 
