@@ -35,7 +35,7 @@ echo "  ░ ░ ▒  ░ ▒   ▒▒ ░░  ░      ░░▒ ░     ░  �
 echo "    ░ ░    ░   ▒   ░      ░   ░░       ░      ░      ░   ░ ░ ░ ░   ░   ░░   ░ "
 echo "      ░  ░     ░  ░       ░                   ░            ░       ░    ░     "
 echo -e "${RESET}"
-echo ""
+echo "Creato da: Enrico Marogna - v1.9.0"
 echo ""
 echo ""
 
@@ -57,7 +57,7 @@ mostra_menu() {
 
   echo -e "${PURPLE}"
   echo -e "========================================================================================"
-  echo -e "                       Web Server Manager - Gestione del server LAMP                    "
+  echo -e "                       LAMP MNGR - Gestione del server LAMP                             "
   echo -e "========================================================================================"
   echo -e "1) Installa Server LAMP    - Installa Apache, MySQL, PHP e Certbot"
   echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
@@ -70,14 +70,14 @@ mostra_menu() {
   echo -e "${RESET}"
 }
 
+# ==================================================
 # Funzione per installare il server LAMP
+# ==================================================
 installa_lamp() {
   # Aggiorna il sistema
   apt update || { echo -e "${RED}Errore nell'aggiornamento dei pacchetti${RESET}"; exit 1; }
 
-  # ==================================================
   # APACHE
-  # ==================================================
   # Verifica se Apache è già installato, se non lo è, installalo
   if ! [ -x "$(command -v apache2)" ]; then
     apt install apache2 -y || { echo -e "${RED}Errore nell'installazione di Apache${RESET}"; exit 1; }
@@ -91,9 +91,7 @@ installa_lamp() {
     echo -e "${YELLOW}Apache è già installato.${RESET}"
   fi
 
-  # ==================================================
   # MYSQL
-  # ==================================================
   # Verifica se MySQL è già installato, se non lo è, installalo
   if ! [ -x "$(command -v mysql)" ]; then
     apt install mysql-server -y || { echo -e "${RED}Errore nell'installazione di MySQL${RESET}"; exit 1; }
@@ -115,9 +113,7 @@ EOF
     echo -e "${YELLOW}MySQL è già installato.${RESET}"
   fi
 
-  # ==================================================
   # PHP
-  # ==================================================
   # Verifica se PHP è già installato
   if [ -x "$(command -v php)" ]; then
     php_version=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
@@ -143,9 +139,7 @@ EOF
     exit 1
   }
 
-  # ==================================================
   # CERTBOT
-  # ==================================================
   # Verifica se Certbot è già installato
   if ! [ -x "$(command -v certbot)" ]; then
     apt install certbot python3-certbot-apache -y || { echo -e "${RED}Errore nell'installazione di Certbot${RESET}"; exit 1; }
@@ -157,7 +151,9 @@ EOF
   echo -e "${GREEN}Installazione del server LAMP e Certbot completata.${RESET}"
 }
 
+# ==================================================
 # Funzione per installare un sito Wordpress
+# ==================================================
 installa_sito() {
   # Verifica se il server LAMP è installato
   if ! [ -x "$(command -v apache2)" ] || ! [ -x "$(command -v mysql)" ] || ! [ -x "$(command -v php)" ]; then
@@ -274,9 +270,13 @@ EOF
 
 }
 
+# ==================================================
+# Funzione per disinstallare un sito
+# ==================================================
 disinstalla_sito() {
   # Elenca tutti i file di configurazione dei siti disponibili
-  echo -e "Ecco l'elenco dei siti disponibili:\n"
+  echo ""
+  echo -e "Ecco l'elenco dei siti disinstallabili:\n"
 
   # Raccoglie solo i siti base, escludendo le configurazioni SSL
   sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
@@ -367,6 +367,9 @@ disinstalla_sito() {
   echo -e "${GREEN}Il sito $domain è stato rimosso con successo.${RESET}"
 }
 
+# ==================================================
+# Funzione per impostare i permessi di WordPress
+# ==================================================
 permessi_wordpress() {
   # Elenca tutti i file di configurazione dei siti disponibili
   echo -e "Ecco l'elenco dei siti disponibili:\n"
@@ -441,6 +444,9 @@ permessi_wordpress() {
   fi
 }
 
+# ==================================================
+# Funzione per generare un certificato SSL
+# ==================================================
 genera_certificato() {
   # Verifica se Certbot è installato, altrimenti esci
   if ! [ -x "$(command -v certbot)" ]; then
@@ -483,7 +489,9 @@ genera_certificato() {
   service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
 }
 
+# ==================================================
 # Funzione per ottenere la lista dei siti presenti
+# ==================================================
 lista_siti() {
   # Rileva i file di configurazione di Apache
   config_files=$(grep -Rl "DocumentRoot" /etc/apache2/sites-available/)
@@ -541,7 +549,9 @@ lista_siti() {
   done
 }
 
+# ==================================================
 # Funzione per eseguire le azioni
+# ==================================================
 esegui_azione() {
   case $1 in
     1)
@@ -572,7 +582,9 @@ esegui_azione() {
   esac
 }
 
+# ==================================================
 # Loop principale
+# ==================================================
 while true; do
   mostra_menu
   read -p "Seleziona un'opzione (1-7): " scelta
