@@ -18,6 +18,9 @@
 
 Script Bash per automatizzare l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su Ubuntu. Consente di configurare rapidamente un ambiente di hosting completo con supporto per siti WordPress, gestione dei permessi, sicurezza MySQL di base e generazione di certificati SSL con Certbot.
 
+> [!CAUTION]
+> **Lo script è in fase Beta e potrebbe contenere errori o bug. Si consiglia di eseguirlo in un ambiente di test prima di utilizzarlo in produzione!**
+
 ## Funzionalità
 
 - **Installazione Server LAMP**: Installa e configura Apache, MySQL, PHP e Certbot con un semplice comando.
