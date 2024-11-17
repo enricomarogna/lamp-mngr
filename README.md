@@ -35,11 +35,10 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
 
 ## Istruzioni per l'uso
 
-1. Clona o scarica lo script:  
+1. Scarica lo script sul tuo server Ubuntu: 
 
    ```bash
-   git clone https://github.com/enricomarogna/lamp-mngr.git
-   cd lamp-mngr
+   wget https://github.com/enricomarogna/lamp-mngr/blob/main/lamp-mngr.sh
     ```
 
 2. Assegna i permessi di esecuzione e sicurezza allo script:
