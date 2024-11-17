@@ -353,6 +353,9 @@ disinstalla_sito() {
     echo -e "${YELLOW}La cartella DocumentRoot non è stata trovata o non esiste: $document_root${RESET}"
   fi
 
+  # Rimuovi il certificato SSL se esiste
+  certbot delete --cert-name $domain
+
   # Riavvia Apache per applicare le modifiche
   service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
 
