@@ -206,6 +206,9 @@ installa_sito() {
     wordpress_download=false
   fi
 
+  # verifica se le credenziali di accesso al database sono corrette, altrimenti esci
+  mysql -uroot -p"$db_root_password" -e "exit" || { echo -e "${RED}Credenziali di accesso al database errate${RESET}"; exit 1; }
+
 # Creazione del file di configurazione di Apache
 tee /etc/apache2/sites-available/$domain.conf <<EOF
 <VirtualHost *:80>
@@ -274,8 +277,10 @@ EOF
 disinstalla_sito() {
   # Elenca tutti i file di configurazione dei siti disponibili
   echo -e "Ecco l'elenco dei siti disponibili:\n"
-  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//'))
-  
+
+  # Raccoglie solo i siti base, escludendo le configurazioni SSL
+  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
+
   if [ ${#sites[@]} -eq 0 ]; then
     echo -e "${RED}Non ci sono siti disponibili da rimuovere.${RESET}"
     exit 1
@@ -311,6 +316,9 @@ disinstalla_sito() {
   # Chiedi all'utente se vuole rimuovere il database
   read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
   echo
+
+  # Rimuovi il certificato SSL se esiste
+  certbot delete --cert-name $domain
 
   # Rimuovi il database se richiesto
   if [[ "$remove_db" == "y" || "$remove_db" == "Y" ]]; then
@@ -352,9 +360,6 @@ disinstalla_sito() {
   else
     echo -e "${YELLOW}La cartella DocumentRoot non è stata trovata o non esiste: $document_root${RESET}"
   fi
-
-  # Rimuovi il certificato SSL se esiste
-  certbot delete --cert-name $domain
 
   # Riavvia Apache per applicare le modifiche
   service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
