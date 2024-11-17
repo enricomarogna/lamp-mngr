@@ -368,18 +368,44 @@ disinstalla_sito() {
 }
 
 permessi_wordpress() {
-  echo -e "Inserisci il nome del dominio per cui vuoi settare i permessi (esempio.com oppure sub.esempio.com):"
-  read -p "Dominio: " domain
+  # Elenca tutti i file di configurazione dei siti disponibili
+  echo -e "Ecco l'elenco dei siti disponibili:\n"
 
-  # Verifica se il dominio esiste, altrimenti esce
-  if [ ! -d "/var/www/$domain" ]; then
-    echo -e "${RED}Il dominio inserito non esiste${RESET}"
-    exit
+  # Raccoglie solo i siti base, escludendo le configurazioni SSL
+  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
+
+  if [ ${#sites[@]} -eq 0 ]; then
+    echo -e "${RED}Non ci sono siti disponibili per cui modificare i permessi.${RESET}"
+    exit 1
   fi
+
+  # Mostra i siti con numerazione
+  for i in "${!sites[@]}"; do
+    echo "$((i + 1)). ${sites[i]}"
+  done
+
+  # Chiede all'utente di scegliere un sito
+  echo -e "\nInserisci il numero del sito per cui modificare i permessi:"
+  read -p "Numero: " site_number
+
+  # Verifica se l'input è valido
+  if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
+    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    exit 1
+  fi
+
+  # Ottiene il nome del dominio scelto
+  domain="${sites[$((site_number - 1))]}"
+  conf_file="/etc/apache2/sites-available/$domain.conf"
+
+  echo -e "Hai selezionato il dominio: $domain"
+
+  # Estrai il DocumentRoot dal file di configurazione di Apache
+  document_root=$(grep -i "DocumentRoot" "$conf_file" | awk '{print $2}')
 
   WP_OWNER=www-data # <-- wordpress owner
   WP_GROUP=www-data # <-- wordpress group
-  WP_ROOT=/var/www/$domain/wordpress # <-- wordpress root directory
+  WP_ROOT=$document_root # <-- wordpress root directory
   WS_GROUP=www-data # <-- webserver group
 
   # Reseta ai valori di default
@@ -456,23 +482,64 @@ genera_certificato() {
 
   # Riavvia Apache per applicare le modifiche
   service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
-
-  echo -e "${GREEN}Il certificato SSL per $domain è stato generato con successo.${RESET}"
 }
 
 # Funzione per ottenere la lista dei siti presenti
 lista_siti() {
-  # Verifica che la directory dei file di configurazione esista
-  if [ -d /etc/apache2/sites-available ]; then
-    echo -e "Elenco dei siti presenti:"
-    # Elenca i file nella directory, rimuovi l'estensione ".conf" per ottenere solo i nomi dei domini
-    for site in /etc/apache2/sites-available/*.conf; do
-      # Estrai solo il nome del sito, rimuovendo il percorso e l'estensione
-      basename "$site" .conf
-    done
-  else
-    echo -e "${RED}La directory /etc/apache2/sites-available non esiste.${RESET}"
+  # Rileva i file di configurazione di Apache
+  config_files=$(grep -Rl "DocumentRoot" /etc/apache2/sites-available/)
+
+  if [ -z "$config_files" ]; then
+    echo -e "Non sono stati trovati file di configurazione con DocumentRoot."
+    return 1
   fi
+
+  # Stampa l'intestazione della tabella con larghezza fissa per le colonne
+  echo ""
+  printf "%-50s | %-3s | %-70s | %-10s\n" "Dominio" "SSL" "DocumentRoot" "WordPress"
+  printf "%-50s-+-%-3s-+-%-70s-+-%-10s\n" "$(printf '%.0s-' {1..50})" "---" "$(printf '%.0s-' {1..70})" "----------"
+
+  # Lista dei domini già processati
+  processed_domains=()
+
+  # Itera attraverso ogni file di configurazione
+  for file in $config_files; do
+    # Estrai il dominio (ServerName) e il DocumentRoot
+    domain=$(grep -i "ServerName" "$file" | awk '{print $2}')
+    doc_root=$(grep -i "DocumentRoot" "$file" | awk '{print $2}')
+
+    # Se il dominio o il DocumentRoot non sono stati trovati, salta al prossimo
+    if [ -z "$domain" ] || [ -z "$doc_root" ]; then
+      continue
+    fi
+
+    # Se il dominio è già stato processato, salta il file (per evitare duplicazioni)
+    if [[ " ${processed_domains[@]} " =~ " ${domain} " ]]; then
+      continue
+    fi
+
+    # Aggiungi il dominio alla lista dei domini processati
+    processed_domains+=("$domain")
+
+    # Troncamento del dominio e DocumentRoot per evitare righe troppo lunghe
+    domain=$(echo $domain | cut -c1-50)  # Truncare il dominio a 50 caratteri
+    doc_root=$(echo $doc_root | cut -c1-70)  # Truncare DocumentRoot a 70 caratteri
+
+    # Controlla se il sito ha una regola di reindirizzamento verso HTTPS
+    ssl_enabled="No"
+    if grep -qi "RewriteRule" "$file" && grep -qi "https" "$file"; then
+      ssl_enabled="Sì "
+    fi
+
+    # Controlla se è un sito WordPress (verifica se esiste il file wp-config.php)
+    is_wordpress="No"
+    if [ -f "${doc_root}/wp-config.php" ] && [ -d "${doc_root}/wp-content" ] && [ -d "${doc_root}/wp-includes" ]; then
+      is_wordpress="Sì"
+    fi
+
+    # Stampa i dati nella tabella, forzando la lunghezza fissa per la colonna "SSL"
+    printf "%-50s | %-3s | %-70s | %-10s\n" "$domain" "$ssl_enabled" "$doc_root" "$is_wordpress"
+  done
 }
 
 # Funzione per eseguire le azioni
