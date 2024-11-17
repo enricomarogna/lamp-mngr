@@ -372,7 +372,7 @@ permessi_wordpress() {
   echo -e "Ecco l'elenco dei siti disponibili:\n"
 
   # Raccoglie solo i siti base, escludendo le configurazioni SSL
-  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
+  sites=($(find /etc/apache2/sites-available -maxdepth 1 -type f -name "*.conf" ! -name "*-ssl.conf" -exec basename {} .conf \; | sort -u))
 
   if [ ${#sites[@]} -eq 0 ]; then
     echo -e "${RED}Non ci sono siti disponibili per cui modificare i permessi.${RESET}"
@@ -408,7 +408,7 @@ permessi_wordpress() {
   WP_ROOT=$document_root # <-- wordpress root directory
   WS_GROUP=www-data # <-- webserver group
 
-  # Reseta ai valori di default
+  # Resetta ai valori di default
   find ${WP_ROOT} -exec chown ${WP_OWNER}:${WP_GROUP} {} \;
   find ${WP_ROOT} -type d -exec chmod 755 {} \;
   find ${WP_ROOT} -type f -exec chmod 644 {} \;
@@ -422,7 +422,6 @@ permessi_wordpress() {
   find ${WP_ROOT}/wp-content -exec chown -R ${WP_OWNER}:${WS_GROUP} {} \; # Modificato il gruppo a WS_GROUP per wp-content
   find ${WP_ROOT}/wp-content -type d -exec chmod 775 {} \;
   find ${WP_ROOT}/wp-content -type f -exec chmod 664 {} \;
-
 
   # Abilita WordPress a gestire wp-config.php (ma previene l'accesso di chiunque altro), se il file esiste
   if [ -f ${WP_ROOT}/wp-config.php ]; then
