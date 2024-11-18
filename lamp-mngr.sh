@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Creato da: Enrico Marogna - https://enricomarogna.com
-# Versione 1.9.0
-# Testato su Ubuntu 22.04 LTS
+# Created by: Enrico Marogna - https://enricomarogna.com
+# Version 1.9.0
+# Tested on Ubuntu 22.04 LTS
 # ---------------------------------------------------------
-# Questo script automatizza l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su un sistema Ubuntu.
-# Permette la creazione di VirtualHost Apache, la gestione di un database MySQL per un sito web, e include l'opzione per
-# configurare un sito WordPress con permessi di sicurezza appropriati. Controlla e imposta le configurazioni necessarie,
-# come i permessi di file e l'uso di moduli Apache. Include anche una gestione basilare della sicurezza MySQL.
-# È consigliato eseguire lo script con privilegi di root per garantire che tutte le operazioni vengano effettuate correttamente:
-# "sudo chown root:root lamp-mngr.sh && sudo chmod 700 lamp-mngr.sh"
-# Per eseguire lo script, digitare "sudo ./lamp-mngr.sh"
+# This script automates the installation and configuration of a LAMP server (Linux, Apache, MySQL, PHP) on an Ubuntu system.
+# It allows the creation of Apache VirtualHosts, management of a MySQL database for a website, and includes the option to
+# configure a WordPress site with appropriate security permissions. It checks and sets necessary configurations,
+# such as file permissions and the use of Apache modules. It also includes basic MySQL security management.
+# It is recommended to run the script with root privileges to ensure all operations are executed correctly:
+# "sudo chown root lamp-mngr.sh && sudo chmod 700 lamp-mngr.sh"
+# To run the script, type "sudo ./lamp-mngr.sh"
 # ---------------------------------------------------------
 
 # COLORS
@@ -35,71 +35,71 @@ echo "  ░ ░ ▒  ░ ▒   ▒▒ ░░  ░      ░░▒ ░     ░  �
 echo "    ░ ░    ░   ▒   ░      ░   ░░       ░      ░      ░   ░ ░ ░ ░   ░   ░░   ░ "
 echo "      ░  ░     ░  ░       ░                   ░            ░       ░    ░     "
 echo -e "${RESET}"
-echo "Creato da: Enrico Marogna - v1.9.0"
+echo "Created by: Enrico Marogna - v1.9.0"
 echo ""
 echo ""
 
 # Funzione per mostrare il menu
-mostra_menu() {
+show_menu() {
   ## Se lo script non è lanciato come root, esci
   if [ "$EUID" -ne 0 ]; then
-    echo -e "${RED}Devi eseguire lo script come root${RESET}"
+    echo -e "${RED}You must run the script as root${RESET}"
     exit 1
   fi
 
   # se il file stesso non non è di proprietà di root e non ha i permessi 700, esci
   if [ "$(stat -c %U $0)" != "root" ] || [ "$(stat -c %a $0)" != "700" ]; then
     path_script=$(realpath $0)
-    echo -e "${RED}Lo script deve essere di proprietà di root e avere i permessi 700 per essere eseguito in sicurezza:${RESET}"
-    echo -e "Esegui: ${BLUE}sudo chown root:root $path_script && sudo chmod 700 $path_script${RESET}"
+    echo -e "${RED}The script must be owned by root and have 700 permissions to be executed securely:${RESET}"
+    echo -e "Run: ${BLUE}sudo chown root:root $path_script && sudo chmod 700 $path_script${RESET}"
     exit 1
   fi
 
   echo -e "${PURPLE}"
-  echo -e "========================================================================================"
-  echo -e "                       LAMP MNGR - Gestione del server LAMP                             "
-  echo -e "========================================================================================"
-  echo -e "1) Installa Server LAMP    - Installa Apache, MySQL, PHP e Certbot"
-  echo -e "2) Installa un sito        - Configura un VirtualHost e un database MySQL per un dominio"
-  echo -e "3) Disinstalla un sito     - Rimuove un VirtualHost e un database MySQL"
-  echo -e "4) Imposta permessi WP     - Configura i permessi di sicurezza per un sito WordPress"
-  echo -e "5) Genera certificato SSL  - Genera un certificato SSL per un sito"
-  echo -e "6) Lista siti              - Mostra l'elenco dei siti presenti"
-  echo -e "7) Esci                    - Esci dallo script"
-  echo -e "========================================================================================"
+  echo -e "==========================================================================================================================="
+  echo -e "                                             LAMP Server Manager                                                           "
+  echo -e "==========================================================================================================================="
+  echo -e "1) Install LAMP Server       - Installs Apache, MySQL, PHP, and Certbot"
+  echo -e "2) Create a Site             - Creates an Apache VirtualHost and a MySQL database for a site (with an option for WordPress)"
+  echo -e "3) Uninstall Site            - Removes a specific site, including files, database, Apache VirtualHost, and log files"
+  echo -e "4) Set WP Permissions        - Configures security permissions for a WordPress site"
+  echo -e "5) Generate SSL Certificate  - Installs and configures an SSL certificate for a domain"
+  echo -e "6) List Installed Sites      - Displays a list of installed sites"
+  echo -e "7) Exit                      - Exits the script"
+  echo -e "==========================================================================================================================="
   echo -e "${RESET}"
 }
 
 # ==================================================
-# Funzione per installare il server LAMP
+# Function to install the LAMP server
 # ==================================================
-installa_lamp() {
+install_lamp() {
   # Aggiorna il sistema
-  apt update || { echo -e "${RED}Errore nell'aggiornamento dei pacchetti${RESET}"; exit 1; }
+  apt update || { echo -e "${RED}Error updating packages${RESET}"; exit 1; }
 
   # APACHE
   # Verifica se Apache è già installato, se non lo è, installalo
   if ! [ -x "$(command -v apache2)" ]; then
-    apt install apache2 -y || { echo -e "${RED}Errore nell'installazione di Apache${RESET}"; exit 1; }
+    apt install apache2 -y || { echo -e "${RED}Error installing Apache${RESET}"; exit 1; }
     # Abilita Apache nel firewall
     ufw allow in "Apache"
     # Abilita mod_rewrite
-    a2enmod rewrite || { echo -e "${RED}Errore nell'abilitazione di mod_rewrite${RESET}"; exit 1; }
+    a2enmod rewrite || { echo -e "${RED}Error enabling mod_rewrite${RESET}"; exit 1; }
     systemctl restart apache2
-    echo -e "${GREEN}Apache installato e configurato.${RESET}"
+    echo -e "${GREEN}Apache installed and configured.${RESET}"
   else
-    echo -e "${YELLOW}Apache è già installato.${RESET}"
+    echo -e "${YELLOW}Apache is already installed.${RESET}"
   fi
 
   # MYSQL
-  # Verifica se MySQL è già installato, se non lo è, installalo
+  # Check if MySQL is already installed, if not, install it
   if ! [ -x "$(command -v mysql)" ]; then
-    apt install mysql-server -y || { echo -e "${RED}Errore nell'installazione di MySQL${RESET}"; exit 1; }
+    apt install mysql-server -y || { echo -e "${RED}Error installing MySQL${RESET}"; exit 1; }
     # Richiedi all'utente di inserire la nuova password
-    read -s -p "Inserisci la password per l'utente root di MySQL: " new_password
+    read -s -p "Enter the password for the MySQL root user: " new_password
     echo
     # Configura MySQL
-    mysql -u root -p -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$new_password';" || { echo -e "${RED}Errore nella configurazione di MySQL${RESET}"; exit 1; }
+    mysql -u root -p -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '$new_password';" || { echo -e "${RED}Error configuring MySQL${RESET}"; exit 1; }
     mysql_secure_installation <<EOF
 $new_password
 n
@@ -108,23 +108,23 @@ y
 y
 y
 EOF
-    echo -e "${GREEN}MySQL installato e configurato.${RESET}"
+    echo -e "${GREEN}MySQL installed and configured.${RESET}"
   else
-    echo -e "${YELLOW}MySQL è già installato.${RESET}"
+    echo -e "${YELLOW}MySQL is already installed.${RESET}"
   fi
 
   # PHP
-  # Verifica se PHP è già installato
+  # Check if PHP is already installed
   if [ -x "$(command -v php)" ]; then
     php_version=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
-    echo -e "${YELLOW}PHP versione $php_version già installata.${RESET}"
+    echo -e "${YELLOW}PHP version $php_version already installed.${RESET}"
   else
-    apt install php libapache2-mod-php php-mysql -y || { echo -e "${RED}Errore nell'installazione di PHP"; exit 1; }
+    apt install php libapache2-mod-php php-mysql -y || { echo -e "${RED}Error installing PHP."; exit 1; }
     php_version=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
-    echo -e "${GREEN}PHP versione $php_version installata.${RESET}"
+    echo -e "${GREEN}PHP version $php_version installed.${RESET}"
   fi
 
-  # Installa i pacchetti aggiuntivi in base alla versione di PHP
+  # Install additional packages based on the PHP version
   apt install \
   php${php_version}-curl \
   php${php_version}-xml \
@@ -135,77 +135,78 @@ EOF
   php${php_version}-gd \
   php-fdomdocument \
   -y || {
-    echo -e "${RED}Errore nell'installazione dei pacchetti aggiuntivi di PHP${RESET}"
+    echo -e "${RED}Error installing additional PHP packages${RESET}"
     exit 1
   }
 
   # CERTBOT
-  # Verifica se Certbot è già installato
+  # Check if Certbot is already installed
   if ! [ -x "$(command -v certbot)" ]; then
-    apt install certbot python3-certbot-apache -y || { echo -e "${RED}Errore nell'installazione di Certbot${RESET}"; exit 1; }
-    echo -e "${GREEN}Certbot per Apache installato.${RESET}"
+    apt install certbot python3-certbot-apache -y || { echo -e "${RED}Error installing Certbot${RESET}"; exit 1; }
+    echo -e "${GREEN}Certbot for Apache installed.${RESET}"
   else
-    echo -e "${YELLOW}Certbot è già installato.${RESET}"
+    echo -e "${YELLOW}Certbot is already installed.${RESET}"
   fi
 
-  echo -e "${GREEN}Installazione del server LAMP e Certbot completata.${RESET}"
+  echo -e "${GREEN}LAMP server and Certbot installation completed.${RESET}"
 }
 
 # ==================================================
-# Funzione per installare un sito Wordpress
+# Function to install a site
 # ==================================================
-installa_sito() {
+install_site() {
   # Verifica se il server LAMP è installato
   if ! [ -x "$(command -v apache2)" ] || ! [ -x "$(command -v mysql)" ] || ! [ -x "$(command -v php)" ]; then
-    echo -e "${YELLOW}Il server LAMP non è installato. Installalo prima di procedere.${RESET}"
+    echo -e "${YELLOW}The LAMP server is not installed. Install it first before proceeding.${RESET}"
     exit 1
   fi
 
-  echo -e "Inserisci il nome del dominio (esempio.com oppure sub.esempio.com):"
-  read -p "Dominio: " domain
+  echo -e "Enter the domain name (example.com or sub.example.com):"
+  read -p "Domain: " domain
   if [ -f /etc/apache2/sites-available/$domain.conf ]; then
-    echo -e "${YELLOW}Il dominio esiste già!${RESET}"
+    echo -e "${YELLOW}The domain already exists!${RESET}"
     exit
   fi
 
-  echo -e "Inserisci il nome del database (esempio_db):"
-  read -p "Nome del database: " database
+  echo -e "Enter the database name (example_db):"
+  read -p "Database name: " database
   if [ -d /var/lib/mysql/$database ]; then
-    echo -e "${YELLOW}Il database esiste già!${RESET}"
+    echo -e "${YELLOW}The database already exists!${RESET}"
     exit
   fi
 
-  # Chiedi all'utente di inserire le credenziali del database
-  echo -e "Inserisci l'username dell'utente del database:"
-  read -p "Nome utente:" db_user
+  # Ask the user to enter the database credentials
+  echo -e "Enter the database user username:"
+  read -p "Database username:" db_user
 
-  # Chiedi all'utente di inserire la password del database
-  echo "Inserisci la password per l'utente del database:"
+  # Ask the user to enter the database password
+  echo "Enter the password for the database user:"
   read -s -p "Password:" db_password
   echo
 
-  # Chiedi all'utente di inserire la password ROOT per MySQL
-  echo "Inserisci la password ROOT per MySQL:"
+  # Ask the user to enter the ROOT password for MySQL
+  echo "Enter the ROOT password for MySQL:"
   read -s -p "Root password:" db_root_password
   echo
 
   # Chiedi all'utente se vuole creare un sito WordPress
-  read -p "Vuoi creare un sito WordPress? (y/n): " -n 1 -r wordpress_choice
+  read -p "Do you want to create a WordPress site? (y/n): " -n 1 -r wordpress_choice
   echo
 
-  # Configura la cartella di destinazione e il VirtualHost
+  # Set the WordPress download flag based on the user's choice
   if [[ "$wordpress_choice" == "y" || "$wordpress_choice" == "Y" ]]; then
-    doc_root="/var/www/$domain/wordpress"
     wordpress_download=true
   else
-    doc_root="/var/www/$domain"
     wordpress_download=false
   fi
 
-  # verifica se le credenziali di accesso al database sono corrette, altrimenti esci
-  mysql -uroot -p"$db_root_password" -e "exit" || { echo -e "${RED}Credenziali di accesso al database errate${RESET}"; exit 1; }
+  # Set the DocumentRoot
+  doc_root="/var/www/$domain"
 
-# Creazione del file di configurazione di Apache
+  # Verify if the database login credentials are correct, otherwise exit.
+  mysql -uroot -p"$db_root_password" -e "exit" || { echo -e "${RED}Incorrect database login credentials${RESET}"; exit 1; }
+
+# Creating Apache configuration file
 tee /etc/apache2/sites-available/$domain.conf <<EOF
 <VirtualHost *:80>
     ServerName $domain
@@ -221,51 +222,51 @@ tee /etc/apache2/sites-available/$domain.conf <<EOF
 </VirtualHost>
 EOF
 
-  # Abilita il nuovo sito
+  # Enable the new site
   a2ensite $domain.conf
 
-  # Creazione della cartella DocumentRoot
+  # Creating the DocumentRoot directory
   mkdir -p /var/www/$domain
 
-  # Riavvia Apache per applicare le modifiche
+  # Restart Apache to apply the changes
   service apache2 restart
 
-  # Scarica e decomprimi WordPress solo se richiesto
+  # Download and extract WordPress only if requested
   if $wordpress_download; then
     wget -P /var/www/$domain https://wordpress.org/latest.zip
     if ! dpkg -l | grep -q unzip; then
-      sudo apt-get install -y unzip || { echo -e "${RED}Errore nell'installazione di unzip"; exit 1; }
+      sudo apt-get install -y unzip || { echo -e "${RED}Error installing unzip"; exit 1; }
     fi
-    unzip /var/www/$domain/latest.zip -d /var/www/$domain || { echo -e "${RED}Errore nell'estrazione di WordPress${RESET}"; exit 1; }
+    unzip /var/www/$domain/latest.zip -d /var/www/$domain || { echo -e "${RED}Error extracting WordPress${RESET}"; exit 1; }
     rm /var/www/$domain/latest.zip
-    chown -R www-data:www-data /var/www/$domain/wordpress
+    chown -R www-data:www-data /var/www/$domain
   fi
 
-  # Imposta i permessi della cartella DocumentRoot
+  # Set permissions for the DocumentRoot directory
   chown -R www-data:www-data /var/www/$domain
   chmod -R g+rw /var/www/$domain
 
   # Creazione del database MariaDB
-  mysql -uroot -p"$db_root_password" -e "CREATE DATABASE $database;" || { echo -e "${RED}Errore nella creazione del database${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Errore nella creazione dell'utente MySQL${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Errore nell'assegnazione dei permessi all'utente MySQL${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Errore nel flush dei permessi${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "CREATE DATABASE $database;" || { echo -e "${RED}Error in creating the database${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Error creating MySQL user${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Error assigning permissions to MySQL user${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Error flushing permissions${RESET}"; exit 1; }
 
-  # Aggiungi il dominio a /etc/hosts
+  # Add the domain to /etc/hosts
   echo -e "127.0.0.1 $domain" | tee -a /etc/hosts
 
-  # Riavvia cloudflared se installato
+  # Restart cloudflared if installed
   if [ -f /usr/local/bin/cloudflared ]; then
     cloudflared service restart
   fi
 
-  # Riavvia Apache per applicare le modifiche
-  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
+  # Restart Apache to apply changes
+  service apache2 restart || { echo -e "${RED}Error restarting Apache${RESET}"; exit 1; }
 
   if $wordpress_download; then
     echo -e "${GREEN}WordPress è stato scaricato e configurato nella cartella $doc_root${RESET}"
   else
-    echo -e "${GREEN}Il sito è stato creato nella cartella $doc_root${RESET}"
+    echo -e "${GREEN}The website has been created in the $doc_root folder.${RESET}"
   fi
 
 }
@@ -273,7 +274,7 @@ EOF
 # ==================================================
 # Funzione per disinstallare un sito
 # ==================================================
-disinstalla_sito() {
+uninstall_site() {
   # Elenca tutti i file di configurazione dei siti disponibili
   echo ""
   echo -e "Ecco l'elenco dei siti disinstallabili:\n"
@@ -383,7 +384,7 @@ disinstalla_sito() {
 # ==================================================
 # Funzione per impostare i permessi di WordPress
 # ==================================================
-permessi_wordpress() {
+wordpress_permissions() {
   # Elenca tutti i file di configurazione dei siti disponibili
   echo -e "Ecco l'elenco dei siti disponibili:\n"
 
@@ -460,7 +461,7 @@ permessi_wordpress() {
 # ==================================================
 # Funzione per generare un certificato SSL
 # ==================================================
-genera_certificato() {
+generate_certificate() {
   # Verifica se Certbot è installato, altrimenti esci
   if ! [ -x "$(command -v certbot)" ]; then
     echo -e "${RED}Certbot non è installato. Installalo prima di procedere.${RESET}"
@@ -505,7 +506,7 @@ genera_certificato() {
 # ==================================================
 # Funzione per ottenere la lista dei siti presenti
 # ==================================================
-lista_siti() {
+sites_list() {
   # Rileva i file di configurazione di Apache
   config_files=$(grep -Rl "DocumentRoot" /etc/apache2/sites-available/)
 
@@ -565,25 +566,25 @@ lista_siti() {
 # ==================================================
 # Funzione per eseguire le azioni
 # ==================================================
-esegui_azione() {
+execute_action() {
   case $1 in
     1)
-      installa_lamp
+      install_lamp
       ;;
     2)
-      installa_sito
+      install_site
       ;;
     3)
-      disinstalla_sito
+      uninstall_site
       ;;
     4)
-      permessi_wordpress
+      wordpress_permissions
       ;;
     5)
-      genera_certificato
+      generate_certificate
       ;;
     6)
-      lista_siti
+      sites_list
       ;;
     7)
       echo -e "Uscita dal programma."
@@ -599,7 +600,7 @@ esegui_azione() {
 # Loop principale
 # ==================================================
 while true; do
-  mostra_menu
-  read -p "Seleziona un'opzione (1-7): " scelta
-  esegui_azione $scelta
+  show_menu
+  read -p "Select an option (1-7): " option_choice
+  execute_action $option_choice
 done
