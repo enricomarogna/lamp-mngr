@@ -314,13 +314,13 @@ disinstalla_sito() {
   error_log=$(grep -i "ErrorLog" "$conf_file" | awk '{print $2}' | head -n 1)
 
   # Verifica se esiste un file di configurazione SSL. Se esiste, rimuovi il certificato SSL associato e disabilita il VirtualHost SSL
-  ssl_conf_file="/etc/apache2/sites-available/$domain-ssl.conf"
+  ssl_conf_file="/etc/apache2/sites-available/$domain-le-ssl.conf"
   if [ -f "$ssl_conf_file" ]; then
     if certbot certificates | grep -q "$domain"; then
       a2dissite "$domain-ssl.conf"
       systemctl reload apache2
       certbot delete --cert-name "$domain" || echo -e "${RED}Errore nella rimozione del certificato${RESET}"
-      rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-ssl.conf"
+      rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-le-ssl.conf"
       rm -rf "/etc/letsencrypt/live/$domain" "/etc/letsencrypt/archive/$domain" "/etc/letsencrypt/renewal/$domain.conf"
       echo -e "${GREEN}Certificato SSL per $domain rimosso.${RESET}"
     else
@@ -333,9 +333,10 @@ disinstalla_sito() {
   # Se l'utente conferma, chiedi il nome del database e rimuovilo
   # Se l'utente non conferma, salta la rimozione del database
   read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
+  echo ""
   # Chiedi conferma, salavndo la risposta in romove_db_check
-  read -p "Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n): " -n 1 -r remove_db_check
-  echo
+  read -p "${YELLOW}Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n):${RESET} " -n 1 -r remove_db_check
+  echo ""
   if [[ "$remove_db" =~ ^[Yy]$ ]] && [[ "$remove_db_check" =~ ^[Yy]$ ]]; then
     echo -e "Inserisci il nome del database da rimuovere:"
     read -p "Nome del database: " database
