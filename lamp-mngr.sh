@@ -281,6 +281,7 @@ disinstalla_sito() {
   # Raccoglie solo i siti base, escludendo le configurazioni SSL
   sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
 
+  # Se non ci sono siti disponibili, esci
   if [ ${#sites[@]} -eq 0 ]; then
     echo -e "${RED}Non ci sono siti disponibili da rimuovere.${RESET}"
     exit 1
@@ -304,7 +305,6 @@ disinstalla_sito() {
   # Ottiene il nome del dominio scelto
   domain="${sites[$((site_number - 1))]}"
   conf_file="/etc/apache2/sites-available/$domain.conf"
-
   echo -e "Hai selezionato il dominio: $domain"
 
   # Estrai il DocumentRoot dal file di configurazione di Apache
@@ -313,32 +313,44 @@ disinstalla_sito() {
   access_log=$(grep -i "CustomLog" "$conf_file" | awk '{print $2}' | head -n 1)
   error_log=$(grep -i "ErrorLog" "$conf_file" | awk '{print $2}' | head -n 1)
 
-  # Chiedi all'utente se vuole rimuovere il database
-  read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
-  echo
-
-  # Rimuovi il certificato SSL se esiste
-  certbot delete --cert-name $domain
+  # Verifica se esiste un file di configurazione SSL. Se esiste, rimuovi il certificato SSL associato e disabilita il VirtualHost SSL
+  ssl_conf_file="/etc/apache2/sites-available/$domain-ssl.conf"
+  if [ -f "$ssl_conf_file" ]; then
+    if certbot certificates | grep -q "$domain"; then
+      a2dissite "$domain-ssl.conf"
+      systemctl reload apache2
+      certbot delete --cert-name "$domain" || echo -e "${RED}Errore nella rimozione del certificato${RESET}"
+      rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-ssl.conf"
+      rm -rf "/etc/letsencrypt/live/$domain" "/etc/letsencrypt/archive/$domain" "/etc/letsencrypt/renewal/$domain.conf"
+      echo -e "${GREEN}Certificato SSL per $domain rimosso.${RESET}"
+    else
+      echo -e "${YELLOW}Nessun certificato SSL trovato per $domain.${RESET}"
+    fi
+  fi
 
   # Rimuovi il database se richiesto
-  if [[ "$remove_db" == "y" || "$remove_db" == "Y" ]]; then
+  # Chiedi all'utente se vuole rimuovere il database associato al dominio
+  # Se l'utente conferma, chiedi il nome del database e rimuovilo
+  # Se l'utente non conferma, salta la rimozione del database
+  read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
+  # Chiedi conferma, salavndo la risposta in romove_db_check
+  read -p "Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n): " -n 1 -r remove_db_check
+  echo
+  if [[ "$remove_db" =~ ^[Yy]$ ]] && [[ "$remove_db_check" =~ ^[Yy]$ ]]; then
     echo -e "Inserisci il nome del database da rimuovere:"
     read -p "Nome del database: " database
-    mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; exit 1; }
-    echo -e "${GREEN}Il database $database è stato rimosso.${RESET}"
+    if [[ -n "$database" ]]; then
+      mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; exit 1; }
+      echo -e "${GREEN}Il database $database è stato rimosso.${RESET}"
+    else
+      echo -e "${RED}Nome del database non valido. Operazione annullata.${RESET}"
+    fi
   fi
 
   # Rimuovi il VirtualHost
   a2dissite "$domain.conf"
   rm "$conf_file"
   [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && rm "/etc/apache2/sites-enabled/$domain.conf"
-
-  # Verifica se esiste un file di configurazione SSL
-  ssl_conf_file="/etc/apache2/sites-available/$domain-ssl.conf"
-  if [ -f "$ssl_conf_file" ]; then
-    rm "$ssl_conf_file"
-    [ -f "/etc/apache2/sites-enabled/$domain-ssl.conf" ] && rm "/etc/apache2/sites-enabled/$domain-ssl.conf"
-  fi
 
   # Rimuovi i file di log
   if [ -n "$access_log" ] && [ -f "$access_log" ]; then
