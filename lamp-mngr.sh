@@ -335,13 +335,13 @@ disinstalla_sito() {
   read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
   echo ""
   # Chiedi conferma, salavndo la risposta in romove_db_check
-  read -p "${YELLOW}Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n):${RESET} " -n 1 -r remove_db_check
+  read -e -p "${YELLOW}Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n):${RESET} " -n 1 -r remove_db_check
   echo ""
   if [[ "$remove_db" =~ ^[Yy]$ ]] && [[ "$remove_db_check" =~ ^[Yy]$ ]]; then
     echo -e "Inserisci il nome del database da rimuovere:"
     read -p "Nome del database: " database
     if [[ -n "$database" ]]; then
-      mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; exit 1; }
+      mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; }
       echo -e "${GREEN}Il database $database è stato rimosso.${RESET}"
     else
       echo -e "${RED}Nome del database non valido. Operazione annullata.${RESET}"
