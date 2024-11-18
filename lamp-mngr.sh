@@ -279,7 +279,7 @@ disinstalla_sito() {
   echo -e "Ecco l'elenco dei siti disinstallabili:\n"
 
   # Raccoglie solo i siti base, escludendo le configurazioni SSL
-  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-ssl$//' | sort -u))
+  sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-le-ssl$//' | sort -u))
 
   # Se non ci sono siti disponibili, esci
   if [ ${#sites[@]} -eq 0 ]; then
@@ -316,17 +316,16 @@ disinstalla_sito() {
   # Verifica se esiste un file di configurazione SSL. Se esiste, rimuovi il certificato SSL associato e disabilita il VirtualHost SSL
   ssl_conf_file="/etc/apache2/sites-available/$domain-le-ssl.conf"
   if [ -f "$ssl_conf_file" ]; then
-    if certbot certificates | grep -q "$domain"; then
-      a2dissite "$domain-ssl.conf"
-      systemctl reload apache2
-      certbot delete --cert-name "$domain" || echo -e "${RED}Errore nella rimozione del certificato${RESET}"
-      rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-le-ssl.conf"
-      rm -rf "/etc/letsencrypt/live/$domain" "/etc/letsencrypt/archive/$domain" "/etc/letsencrypt/renewal/$domain.conf"
-      echo -e "${GREEN}Certificato SSL per $domain rimosso.${RESET}"
-    else
-      echo -e "${YELLOW}Nessun certificato SSL trovato per $domain.${RESET}"
-    fi
+    a2dissite "$domain-ssl.conf"
+    systemctl reload apache2
+    certbot delete --cert-name "$domain" || echo -e "${RED}Errore nella rimozione del certificato${RESET}"
+    rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-le-ssl.conf"
+    rm -rf "/etc/letsencrypt/live/$domain" "/etc/letsencrypt/archive/$domain" "/etc/letsencrypt/renewal/$domain.conf"
+    echo -e "${GREEN}Certificato SSL per $domain rimosso.${RESET}"
+  else
+    echo -e "${YELLOW}Nessun certificato SSL trovato per $domain.${RESET}"
   fi
+
 
   # Rimuovi il database se richiesto
   # Chiedi all'utente se vuole rimuovere il database associato al dominio
@@ -335,7 +334,8 @@ disinstalla_sito() {
   read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
   echo ""
   # Chiedi conferma, salavndo la risposta in romove_db_check
-  read -e -p "${YELLOW}Sei sicuro di voler rimuovere il database? Hai già fatto un backup dei dati? (y/n):${RESET} " -n 1 -r remove_db_check
+  echo -e "${YELLOW}ATTENZIONE: Questa operazione rimuoverà definitivamente il database e tutti i dati associati.${RESET}"
+  read -p "Procedere con la rimozione del database? (y/n): " -n 1 -r remove_db_check
   echo ""
   if [[ "$remove_db" =~ ^[Yy]$ ]] && [[ "$remove_db_check" =~ ^[Yy]$ ]]; then
     echo -e "Inserisci il nome del database da rimuovere:"
