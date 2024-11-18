@@ -1,7 +1,6 @@
 # LAMP Manager Script
-
-![Versione](https://img.shields.io/badge/Versione-1.9.0-blue)
-![Testato su](https://img.shields.io/badge/Testato%20su-Ubuntu%2022.04%20LTS-violet)
+![Version](https://img.shields.io/badge/Version-1.9.0-blue)
+![Tested on](https://img.shields.io/badge/Tested%20on-Ubuntu%2022.04%20LTS-violet)
 ![Licenza](https://img.shields.io/badge/Licenza-MIT-green)
 ![GitHub last commit](https://img.shields.io/github/last-commit/enricomarogna/lamp-mngr)
 
@@ -18,36 +17,36 @@
       ░  ░     ░  ░       ░                   ░            ░       ░    ░
 ```
 
-Script Bash per automatizzare l'installazione e la configurazione di un server LAMP (Linux, Apache, MySQL, PHP) su Ubuntu. Consente di configurare rapidamente un ambiente di hosting completo con supporto per siti WordPress, gestione dei permessi, sicurezza MySQL di base e generazione di certificati SSL con Certbot.
+Bash script to automate the installation and configuration of a LAMP server (Linux, Apache, MySQL, PHP) on Ubuntu. It allows for quickly setting up a complete hosting environment with support for WordPress sites, permission management, basic MySQL security, and SSL certificate generation using Certbot.
 
 <div class="disclaimer" markdown="1" style="color: red; border-left: 6px solid #c00; padding: 10px; margin-top: 20px;">
-   <span style="font-weight: bold;">Attenzione:</span>
+   <span style="font-weight: bold;">Warning:</span>
    <p style="margin:0;">
-   Lo script è in fase Beta e potrebbe contenere errori o bug. Si consiglia di eseguirlo in un ambiente di test prima di utilizzarlo in produzione!
+   The script is in Beta phase and may contain errors or bugs. It is recommended to run it in a testing environment before using it in production!
    </p>
 </div>
 
-## Funzionalità
-- **Installazione Server LAMP**: Installa e configura Apache, MySQL, PHP e Certbot con un semplice comando.
-- **Configurazione VirtualHost Apache**: Crea VirtualHost per siti specifici, includendo la gestione dei permessi e l'aggiunta del dominio al file `/etc/hosts`.
-- **Configurazione di un sito WordPress**: Scarica, decomprime e configura WordPress con i permessi di sicurezza adeguati.
-- **Gestione Permessi WordPress**: Configura correttamente i permessi di file e cartelle per una maggiore sicurezza.
-- **Disinstallazione di un sito**: Rimuove un sito specifico, inclusi il VirtualHost Apache, il database MySQL, i file del sito e i certificati SSL.
-- **Certificati SSL**: Installa e configura certificati SSL per i domini specificati.
-- **Lista Siti Installati**: Visualizza l'elenco dei siti installati.
+## Features
+- **LAMP Server Installation**: Installs and configures Apache, MySQL, PHP, and Certbot with a single command.
+- **Apache VirtualHost Configuration**: Creates VirtualHosts for specific sites, including permission management and adding the domain to the `/etc/hosts` file.
+- **WordPress Site Setup**: Downloads, unpacks, and configures WordPress with proper security permissions.
+- **WordPress Permissions Management**: Correctly configures file and folder permissions for enhanced security.
+- **Site Uninstallation**: Removes a specific site, including the Apache VirtualHost, MySQL database, site files, and SSL certificates.
+- **SSL Certificates**: Installs and configures SSL certificates for specified domains.
+- **List of Installed Sites**: Displays a list of the installed sites.
 
-## Requisiti
-- **Sistema operativo**: Ubuntu 22.04 LTS (o versioni compatibili)
-- **Privilegi di root**: È necessario eseguire lo script con privilegi di root
+## Requirements
+- **Operating System**: Ubuntu 22.04 LTS (or compatible versions).
+- **Root Privileges**: The script must be run with root privileges.
 
-## Istruzioni per l'uso
-1. Scarica lo script sul tuo server Ubuntu: 
+## Usage Instructions
+1. Download the script to your Ubuntu server: 
 
    ```bash
    wget https://raw.githubusercontent.com/enricomarogna/lamp-mngr/refs/heads/main/lamp-mngr.sh
    ```
 
-2. Assegna i permessi di esecuzione e sicurezza allo script:
+2. Assign execution and security permissions to the script:
 
    ```bash
    chmod +x lamp-mngr.sh
@@ -55,50 +54,50 @@ Script Bash per automatizzare l'installazione e la configurazione di un server L
    sudo chmod 700 lamp-mngr.sh
    ```
 
-3. Esegui lo script:
+3. Run the script:
    
    ```bash
    sudo ./lamp-mngr.sh
    ```
 
-## Menu Principale
-Lo script offre un'interfaccia a menu con le seguenti opzioni:
+## Main Menu
+The script provides a menu interface with the following options:
 
-|#|Opzione|Descrizione|
+|#|Option|Description|
 |-|-------|-----------|
-|1|**Installa Server LAMP**|Installa Apache, MySQL, PHP e Certbot|
-|2|**Crea un sito**|Crea un VirtualHost Apache e un database MySQL per un sito (con opzione per WordPress)|
-|3|**Disinstalla sito**|Rimuove un sito specifico, inclusi i file, il database, il VirtualHost Apache e i files di log|
-|4|**Imposta permessi WP**|Configura i permessi di sicurezza per un sito WordPress|
-|5|**Genera certificato SSL**|Installa e configura un certificato SSL per un dominio|
-|6|**Lista siti installati**|Visualizza un elenco dei siti installati|
-|7|**Esci**|Chiude lo script|
+|1|**Install LAMP Server**|Installs Apache, MySQL, PHP, and Certbot|
+|2|**Create a Site**|Creates an Apache VirtualHost and a MySQL database for a site (with an option for WordPress)|
+|3|**Uninstall Site**|Removes a specific site, including files, database, Apache VirtualHost, and log files|
+|4|**Set WP Permissions**|Configures security permissions for a WordPress site|
+|5|**Generate SSL Certificate**|Installs and configures an SSL certificate for a domain|
+|6|**List Installed Sites**|Displays a list of installed sites|
+|7|**Exit**|Exits the script|
 
-## Dettagli Tecnici
-- **Apache**: Abilitazione automatica di `mod_rewrite` e configurazione del firewall con `ufw`.
-- **MySQL**: Configurazione della password root, esecuzione automatica di `mysql_secure_installation`, e - creazione di database e utenti.
-- **PHP**: Verifica della versione di PHP installata e installazione dei moduli necessari, tra cui `php-curl`, `php-gd`, `php-mbstring`, `php-xml`, `php-zip`, `php-imagick`, `php-intl` e `php-fdomdocument`
-- **Certbot**: Installazione per la gestione automatizzata di certificati SSL.
+## Technical Details
 
-## Sicurezza
-- Lo script controlla che venga eseguito con privilegi di root e che i permessi siano corretti (700) per garantire la sicurezza.
-- MySQL viene configurato con password sicure e vengono eseguite operazioni di sicurezza di base per limitare le vulnerabilità.
-- **Lo script è in fase Beta e potrebbe contenere errori o bug. Si consiglia di eseguirlo in un ambiente di test prima di utilizzarlo in produzione!**
+- **Apache**: Automatic activation of `mod_rewrite` and firewall configuration using `ufw`.
+- **MySQL**: Root password configuration, automatic execution of `mysql_secure_installation`, and creation of databases and users.
+- **PHP**: Checks the installed PHP version and installs the necessary modules, including `php-curl`, `php-gd`, `php-mbstring`, `php-xml`, `php-zip`, `php-imagick`, `php-intl`, and `php-fdomdocument`.
+- **Certbot**: Installation for automated SSL certificate management.
 
-## Note Importanti
-- Esegui lo script con cautela: Effettua sempre un backup dei dati importanti prima di eseguire script di configurazione automatizzati.
-- Limitazioni: Lo script è progettato per essere eseguito su un sistema Ubuntu 22.04 LTS. Potrebbe non funzionare correttamente su altre distribuzioni o versioni di Ubuntu.
+## Security
+- The script checks that it is run with root privileges and ensures the permissions are correctly set (`700`) to maintain security.
+- MySQL is configured with secure passwords, and basic security operations are performed to minimize vulnerabilities.
+- **The script is in Beta phase and may contain errors or bugs. It is recommended to run it in a testing environment before using it in production!**
 
-## Contribuzione
-Se desideri contribuire a migliorare questo script, sentiti libero di creare una fork del progetto e inviare una pull request. Ogni feedback e suggerimento è ben accetto!
+## Important Notes
+- Run the script with caution: Always back up important data before running automated configuration scripts.
+- Limitations: The script is designed to be run on Ubuntu 22.04 LTS. It may not work properly on other distributions or versions of Ubuntu.
 
-## Autore
-Creato da [Enrico Marogna](https://enricomarogna.com/)
+## Contributing
+If you'd like to help improve this script, feel free to create a fork of the project and submit a pull request. Any feedback and suggestions are welcome!
 
-## Licenza
-Distribuito sotto la licenza MIT. Consulta il file [LICENSE](https://raw.githubusercontent.com/enricomarogna/lamp-mngr/refs/heads/main/LICENSE.rst) per maggiori dettagli.
+## Author
+Created by [Enrico Marogna](https://enricomarogna.com/)
 
-## Supporta lo sviluppo
-Puoi supportare lo sviluppo di questo progetto con una donazione su Ko-fi.
+## License
+Distributed under the MIT License. See the [LICENSE](https://raw.githubusercontent.com/enricomarogna/lamp-mngr/refs/heads/main/LICENSE.rst) file for more details.
 
+## Support Development
+You can support the development of this project with a donation on Ko-fi.
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8166X59)
