@@ -100,4 +100,5 @@ Distributed under the MIT License. See the [LICENSE](https://raw.githubuserconte
 
 ## Support Development
 You can support the development of this project with a donation on Ko-fi.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8166X59)
