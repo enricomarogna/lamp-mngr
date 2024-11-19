@@ -272,152 +272,152 @@ EOF
 }
 
 # ==================================================
-# Funzione per disinstallare un sito
+# Function to uninstall a site
 # ==================================================
 uninstall_site() {
-  # Elenca tutti i file di configurazione dei siti disponibili
+  # List all available site configuration files
   echo ""
-  echo -e "Ecco l'elenco dei siti disinstallabili:\n"
+  echo -e "Here is the list of removable sites:\n"
 
-  # Raccoglie solo i siti base, escludendo le configurazioni SSL
+  # Gather only base sites, excluding SSL configurations
   sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//' | sed 's/-le-ssl$//' | sort -u))
 
-  # Se non ci sono siti disponibili, esci
+  # If there are no available sites, exit
   if [ ${#sites[@]} -eq 0 ]; then
-    echo -e "${RED}Non ci sono siti disponibili da rimuovere.${RESET}"
+    echo -e "${RED}There are no sites available for removal.${RESET}"
     exit 1
   fi
 
-  # Mostra i siti con numerazione
+  # Show the sites with numbering
   for i in "${!sites[@]}"; do
     echo "$((i + 1)). ${sites[i]}"
   done
 
-  # Chiede all'utente di scegliere un sito
-  echo -e "\nInserisci il numero del sito da rimuovere:"
-  read -p "Numero: " site_number
+  # Ask the user to choose a site
+  echo -e "\nEnter the number of the site to remove:"
+  read -p "Number: " site_number
 
-  # Verifica se l'input è valido
+  # Verify if the input is valid
   if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
-    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    echo -e "${RED}Invalid choice. Exiting.${RESET}"
     exit 1
   fi
 
-  # Ottiene il nome del dominio scelto
+  # Gets the chosen domain name
   domain="${sites[$((site_number - 1))]}"
   conf_file="/etc/apache2/sites-available/$domain.conf"
-  echo -e "Hai selezionato il dominio: $domain"
+  echo -e "You have selected the domain: $domain"
 
-  # Estrai il DocumentRoot dal file di configurazione di Apache
+  # Extract the DocumentRoot from the Apache configuration file
   document_root=$(grep -i "DocumentRoot" "$conf_file" | awk '{print $2}')
   # Estrai i file di log dal file di configurazione di Apache
   access_log=$(grep -i "CustomLog" "$conf_file" | awk '{print $2}' | head -n 1)
   error_log=$(grep -i "ErrorLog" "$conf_file" | awk '{print $2}' | head -n 1)
 
-  # Verifica se esiste un file di configurazione SSL. Se esiste, rimuovi il certificato SSL associato e disabilita il VirtualHost SSL
+  # Check if an SSL configuration file exists. If it does, remove the associated SSL certificate and disable the SSL VirtualHost
   ssl_conf_file="/etc/apache2/sites-available/$domain-le-ssl.conf"
   if [ -f "$ssl_conf_file" ]; then
     a2dissite "$domain-ssl.conf"
     systemctl reload apache2
-    certbot delete --cert-name "$domain" || echo -e "${RED}Errore nella rimozione del certificato${RESET}"
+    certbot delete --cert-name "$domain" || echo -e "${RED}Error removing the certificate${RESET}"
     rm -f "$ssl_conf_file" "/etc/apache2/sites-enabled/$domain-le-ssl.conf"
     rm -rf "/etc/letsencrypt/live/$domain" "/etc/letsencrypt/archive/$domain" "/etc/letsencrypt/renewal/$domain.conf"
-    echo -e "${GREEN}Certificato SSL per $domain rimosso.${RESET}"
+    echo -e "${GREEN}SSL certificate for $domain removed.${RESET}"
   else
-    echo -e "${YELLOW}Nessun certificato SSL trovato per $domain.${RESET}"
+    echo -e "${YELLOW}No SSL certificate found for $domain.${RESET}"
   fi
 
 
-  # Rimuovi il database se richiesto
-  # Chiedi all'utente se vuole rimuovere il database associato al dominio
-  # Se l'utente conferma, chiedi il nome del database e rimuovilo
-  # Se l'utente non conferma, salta la rimozione del database
-  read -p "Vuoi rimuovere il database associato a $domain? (y/n): " -n 1 -r remove_db
+  # Remove the database if requested
+  # Ask the user if they want to remove the database associated with the domain 
+  # If the user confirms, ask for the database name and remove it
+  # If the user does not confirm, skip the database removal
+  read -p "Do you want to remove the database associated with $domain? (y/n): " -n 1 -r remove_db
   echo ""
-  # Chiedi conferma, salavndo la risposta in romove_db_check
-  echo -e "${YELLOW}ATTENZIONE: Questa operazione rimuoverà definitivamente il database e tutti i dati associati.${RESET}"
-  read -p "Procedere con la rimozione del database? (y/n): " -n 1 -r remove_db_check
+  # Ask for confirmation, saving the answer in remove_db_check
+  echo -e "${YELLOW}WARNING: This operation will permanently remove the database and all associated data.${RESET}"
+  read -p "Proceed with the removal of the database? (y/n): " -n 1 -r remove_db_check
   echo ""
   if [[ "$remove_db" =~ ^[Yy]$ ]] && [[ "$remove_db_check" =~ ^[Yy]$ ]]; then
-    echo -e "Inserisci il nome del database da rimuovere:"
-    read -p "Nome del database: " database
+    echo -e "Enter the name of the database to remove:"
+    read -p "Database name: " database
     if [[ -n "$database" ]]; then
-      mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Errore nella rimozione del database${RESET}"; }
-      echo -e "${GREEN}Il database $database è stato rimosso.${RESET}"
+      mysql -uroot -p -e "DROP DATABASE $database;" || { echo -e "${RED}Error in removing the database${RESET}"; }
+      echo -e "${GREEN}The database $database has been removed.${RESET}"
     else
-      echo -e "${RED}Nome del database non valido. Operazione annullata.${RESET}"
+      echo -e "${RED}Invalid database name. Operation cancelled.${RESET}"
     fi
   fi
 
-  # Rimuovi il VirtualHost
+  # Remove the VirtualHost
   a2dissite "$domain.conf"
   rm "$conf_file"
   [ -f "/etc/apache2/sites-enabled/$domain.conf" ] && rm "/etc/apache2/sites-enabled/$domain.conf"
 
-  # Rimuovi i file di log
+  # Remove the log files
   if [ -n "$access_log" ] && [ -f "$access_log" ]; then
     rm "$access_log"
-    echo -e "${GREEN}Il file di log degli accessi è stato rimosso: $access_log${RESET}"
+    echo -e "${GREEN}The access log file has been removed: $access_log${RESET}"
   fi
   if [ -n "$error_log" ] && [ -f "$error_log" ]; then
     rm "$error_log"
-    echo -e "${GREEN}Il file di log degli errori è stato rimosso: $error_log${RESET}"
+    echo -e "${GREEN}The error log file has been removed: $error_log${RESET}"
   fi
 
-  # Rimuovi il dominio da /etc/hosts
+  # Remove domain from /etc/hosts
   sed -i "/$domain/d" /etc/hosts
 
-  # Rimuovi la cartella DocumentRoot
+  # Remove DocumentRoot directory
   if [ -n "$document_root" ] && [ -d "$document_root" ]; then
     rm -rf "$document_root"
-    echo -e "${GREEN}La cartella DocumentRoot è stata rimossa: $document_root${RESET}"
+    echo -e "${GREEN}The DocumentRoot folder has been removed: $document_root${RESET}"
   else
-    echo -e "${YELLOW}La cartella DocumentRoot non è stata trovata o non esiste: $document_root${RESET}"
+    echo -e "${YELLOW}The DocumentRoot folder was not found or does not exist: $document_root${RESET}"
   fi
 
-  # Riavvia Apache per applicare le modifiche
-  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
+  # Restart Apache to apply changes
+  service apache2 restart || { echo -e "${RED}Error restarting Apache${RESET}"; exit 1; }
 
-  echo -e "${GREEN}Il sito $domain è stato rimosso con successo.${RESET}"
+  echo -e "${GREEN}The site $domain has been successfully removed.${RESET}"
 }
 
 # ==================================================
-# Funzione per impostare i permessi di WordPress
+# Function to set WordPress permissions
 # ==================================================
 wordpress_permissions() {
-  # Elenca tutti i file di configurazione dei siti disponibili
-  echo -e "Ecco l'elenco dei siti disponibili:\n"
+  # List all available site configuration files
+  echo -e "Here is the list of available sites:\n"
 
   # Raccoglie solo i siti base, escludendo le configurazioni SSL
   sites=($(find /etc/apache2/sites-available -maxdepth 1 -type f -name "*.conf" ! -name "*-ssl.conf" -exec basename {} .conf \; | sort -u))
 
   if [ ${#sites[@]} -eq 0 ]; then
-    echo -e "${RED}Non ci sono siti disponibili per cui modificare i permessi.${RESET}"
+    echo -e "${RED}There are no available sites to modify permissions for.${RESET}"
     exit 1
   fi
 
-  # Mostra i siti con numerazione
+  # Show the sites with numbering.
   for i in "${!sites[@]}"; do
     echo "$((i + 1)). ${sites[i]}"
   done
 
-  # Chiede all'utente di scegliere un sito
-  echo -e "\nInserisci il numero del sito per cui modificare i permessi:"
-  read -p "Numero: " site_number
+  # Asks the user to choose a site
+  echo -e "\nEnter the number of the site to modify permissions for:"
+  read -p "Number: " site_number
 
-  # Verifica se l'input è valido
+  # Verify if the input is valid
   if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
-    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    echo -e "${RED}Invalid choice. Exiting.${RESET}"
     exit 1
   fi
 
-  # Ottiene il nome del dominio scelto
+  # Gets the chosen domain name
   domain="${sites[$((site_number - 1))]}"
   conf_file="/etc/apache2/sites-available/$domain.conf"
 
-  echo -e "Hai selezionato il dominio: $domain"
+  echo -e "You have selected the domain: $domain"
 
-  # Estrai il DocumentRoot dal file di configurazione di Apache
+  # Extract the DocumentRoot from the Apache configuration file
   document_root=$(grep -i "DocumentRoot" "$conf_file" | awk '{print $2}')
 
   WP_OWNER=www-data # <-- wordpress owner
@@ -425,146 +425,145 @@ wordpress_permissions() {
   WP_ROOT=$document_root # <-- wordpress root directory
   WS_GROUP=www-data # <-- webserver group
 
-  # Resetta ai valori di default
+  # Reset to default values
   find ${WP_ROOT} -exec chown ${WP_OWNER}:${WP_GROUP} {} \;
   find ${WP_ROOT} -type d -exec chmod 755 {} \;
   find ${WP_ROOT} -type f -exec chmod 644 {} \;
 
-  # Abilita WordPress a gestire .htaccess
+  # Enable WordPress to manage .htaccess
   touch ${WP_ROOT}/.htaccess
   chgrp ${WS_GROUP} ${WP_ROOT}/.htaccess
-  chmod 644 ${WP_ROOT}/.htaccess # Impostato a 644 per limitare i permessi
+  chmod 644 ${WP_ROOT}/.htaccess # Set to 644 to limit permissions
 
   # Abilita WordPress a gestire wp-content
-  find ${WP_ROOT}/wp-content -exec chown -R ${WP_OWNER}:${WS_GROUP} {} \; # Modificato il gruppo a WS_GROUP per wp-content
+  find ${WP_ROOT}/wp-content -exec chown -R ${WP_OWNER}:${WS_GROUP} {} \; # Changed the group to WS_GROUP for wp-content
   find ${WP_ROOT}/wp-content -type d -exec chmod 775 {} \;
   find ${WP_ROOT}/wp-content -type f -exec chmod 664 {} \;
 
-  # Abilita WordPress a gestire wp-config.php (ma previene l'accesso di chiunque altro), se il file esiste
+  # Enable WordPress to manage wp-config.php (but prevent access by anyone else), if the file exists
   if [ -f ${WP_ROOT}/wp-config.php ]; then
     chown ${WP_OWNER}:${WS_GROUP} ${WP_ROOT}/wp-config.php
-    chmod 640 ${WP_ROOT}/wp-config.php # Impostato a 640 per limitare i permessi
+    chmod 640 ${WP_ROOT}/wp-config.php # Set to 640 to limit permissions
     MSG=""
   else
-    MSG="Ricordati reimpostare i permessi dopo aver completato la configurazione di WordPress!!!"
+    MSG="Remember to reset the permissions after completing the WordPress configuration!!!"
   fi
 
-  ### ESITO ###
-  # Se non ci sono errori, mostra un messaggio di successo
+  # If there are no errors, display a success message.
   if [ $? -eq 0 ]; then
-    echo -e "${GREEN}I permessi sono stati impostati correttamente. $MSG${RESET}"
+    echo -e "${GREEN}The permissions have been set correctly. $MSG${RESET}"
   else
-    echo -e "${RED}Si è verificato un errore durante l'impostazione dei permessi${RESET}"
+    echo -e "${RED}An error occurred while setting the permissions.${RESET}"
   fi
 }
 
 # ==================================================
-# Funzione per generare un certificato SSL
+# Function to generate an SSL certificate
 # ==================================================
 generate_certificate() {
   # Verifica se Certbot è installato, altrimenti esci
   if ! [ -x "$(command -v certbot)" ]; then
-    echo -e "${RED}Certbot non è installato. Installalo prima di procedere.${RESET}"
+    echo -e "${RED}Certbot is not installed. Install it before proceeding.${RESET}"
     exit 1
   fi
 
-  # Mostar elenco dei domini e chiedere all'utente di sceglierne uno per cui generare il certificato
-  echo -e "Ecco l'elenco dei siti disponibili:\n"
+  # Show a list of domains and ask the user to choose one for which to generate the certificate
+  echo -e "Here is the list of available sites:\n"
   sites=($(ls /etc/apache2/sites-available/*.conf | xargs -n 1 basename | sed 's/\.conf$//'))
 
   if [ ${#sites[@]} -eq 0 ]; then
-    echo -e "${RED}Non ci sono siti disponibili per generare un certificato.${RESET}"
+    echo -e "${RED}Here is the list of available sites:${RESET}"
     exit 1
   fi
 
-  # Mostra i siti con numerazione
+  # Show the sites with numbering
   for i in "${!sites[@]}"; do
     echo "$((i + 1)). ${sites[i]}"
   done
 
   # Chiedi all'utente di scegliere un sito
-  echo -e "\nInserisci il numero del sito per cui generare il certificato:"
-  read -p "Numero: " site_number
+  echo -e "\nEnter the site number for which to generate the certificate:"
+  read -p "Number: " site_number
 
-  # Verifica se l'input è valido
+  # Verify if the input is valid
   if ! [[ "$site_number" =~ ^[0-9]+$ ]] || [ "$site_number" -lt 1 ] || [ "$site_number" -gt "${#sites[@]}" ]; then
-    echo -e "${RED}Scelta non valida. Uscita.${RESET}"
+    echo -e "${RED}Invalid choice. Exiting.${RESET}"
     exit 1
   fi
 
-  # Ottiene il nome del dominio scelto
+  # Get the chosen domain name
   domain="${sites[$((site_number - 1))]}"
-  echo -e "Hai selezionato il dominio: $domain"
+  echo -e "ou have selected the domain: $domain"
 
   # Genera il certificato SSL
   certbot --apache -d $domain
 
   # Riavvia Apache per applicare le modifiche
-  service apache2 restart || { echo -e "${RED}Errore nel riavvio di Apache${RESET}"; exit 1; }
+  service apache2 restart || { echo -e "${RED}Error restarting Apache${RESET}"; exit 1; }
 }
 
 # ==================================================
-# Funzione per ottenere la lista dei siti presenti
+# Function to get the list of existing sites
 # ==================================================
 sites_list() {
-  # Rileva i file di configurazione di Apache
+  # Detect Apache configuration files
   config_files=$(grep -Rl "DocumentRoot" /etc/apache2/sites-available/)
 
   if [ -z "$config_files" ]; then
-    echo -e "Non sono stati trovati file di configurazione con DocumentRoot."
+    echo -e "No configuration files with DocumentRoot found."
     return 1
   fi
 
-  # Stampa l'intestazione della tabella con larghezza fissa per le colonne
+  # Print the table header with fixed column widths.
   echo ""
-  printf "%-50s | %-3s | %-70s | %-10s\n" "Dominio" "SSL" "DocumentRoot" "WordPress"
+  printf "%-50s | %-3s | %-70s | %-10s\n" "Domain" "SSL" "DocumentRoot" "WordPress"
   printf "%-50s-+-%-3s-+-%-70s-+-%-10s\n" "$(printf '%.0s-' {1..50})" "---" "$(printf '%.0s-' {1..70})" "----------"
 
-  # Lista dei domini già processati
+  # List of domains already processed
   processed_domains=()
 
-  # Itera attraverso ogni file di configurazione
+  # Iterate through each configuration file
   for file in $config_files; do
     # Estrai il dominio (ServerName) e il DocumentRoot
     domain=$(grep -i "ServerName" "$file" | awk '{print $2}')
     doc_root=$(grep -i "DocumentRoot" "$file" | awk '{print $2}')
 
-    # Se il dominio o il DocumentRoot non sono stati trovati, salta al prossimo
+    # Skip to the next if the domain or DocumentRoot are not found
     if [ -z "$domain" ] || [ -z "$doc_root" ]; then
       continue
     fi
 
-    # Se il dominio è già stato processato, salta il file (per evitare duplicazioni)
+    # Skip the file if the domain has already been processed (to avoid duplication)
     if [[ " ${processed_domains[@]} " =~ " ${domain} " ]]; then
       continue
     fi
 
-    # Aggiungi il dominio alla lista dei domini processati
+    # Aggiungi il dominio alla lista dei domini già processati
     processed_domains+=("$domain")
 
-    # Troncamento del dominio e DocumentRoot per evitare righe troppo lunghe
-    domain=$(echo $domain | cut -c1-50)  # Truncare il dominio a 50 caratteri
-    doc_root=$(echo $doc_root | cut -c1-70)  # Truncare DocumentRoot a 70 caratteri
+    # Troncare il dominio e il DocumentRoot per evitare che le righe diventino troppo lunghe
+    domain=$(echo $domain | cut -c1-50)  # Truncate the domain to 50 characters
+    doc_root=$(echo $doc_root | cut -c1-70)  # Truncate the DocumentRoot to 70 characters
 
-    # Controlla se il sito ha una regola di reindirizzamento verso HTTPS
+    # Check if the site has a redirect rule to HTTPS
     ssl_enabled="No"
     if grep -qi "RewriteRule" "$file" && grep -qi "https" "$file"; then
       ssl_enabled="Sì "
     fi
 
-    # Controlla se è un sito WordPress (verifica se esiste il file wp-config.php)
+    # Check if it is a WordPress site (verify if the wp-config.php file exists)
     is_wordpress="No"
     if [ -f "${doc_root}/wp-config.php" ] && [ -d "${doc_root}/wp-content" ] && [ -d "${doc_root}/wp-includes" ]; then
       is_wordpress="Sì"
     fi
 
-    # Stampa i dati nella tabella, forzando la lunghezza fissa per la colonna "SSL"
+    # Print the data in the table, forcing fixed width for the 'SSL' column
     printf "%-50s | %-3s | %-70s | %-10s\n" "$domain" "$ssl_enabled" "$doc_root" "$is_wordpress"
   done
 }
 
 # ==================================================
-# Funzione per eseguire le azioni
+# Function to execute actions
 # ==================================================
 execute_action() {
   case $1 in
@@ -587,17 +586,17 @@ execute_action() {
       sites_list
       ;;
     7)
-      echo -e "Uscita dal programma."
+      echo -e "Exiting the program."
       exit 0
       ;;
     *)
-      echo -e "Scelta non valida, riprova."
+      echo -e "Invalid choice, please try again."
       ;;
   esac
 }
 
 # ==================================================
-# Loop principale
+# Main loop
 # ==================================================
 while true; do
   show_menu
