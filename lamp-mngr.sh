@@ -248,9 +248,9 @@ EOF
 
   # Creazione del database MariaDB
   mysql -uroot -p"$db_root_password" -e "CREATE DATABASE $database;" || { echo -e "${RED}Error in creating the database${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Error creating MySQL user${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Error assigning permissions to MySQL user${RESET}"; exit 1; }
-  mysql -uroot -p"$db_root_password" -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Error flushing permissions${RESET}"; exit 1; }
+  mysql -uroot -p"$db_root_password" -e "CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';" || { echo -e "${RED}Error creating MySQL user${RESET}"; }
+  mysql -uroot -p"$db_root_password" -e "GRANT ALL PRIVILEGES ON $database.* TO '$db_user'@'localhost';" || { echo -e "${RED}Error assigning permissions to MySQL user${RESET}"; }
+  mysql -uroot -p"$db_root_password" -e "FLUSH PRIVILEGES;" || { echo -e "${RED}Error flushing permissions${RESET}"; }
 
   # Add the domain to /etc/hosts
   echo -e "127.0.0.1 $domain" | tee -a /etc/hosts
