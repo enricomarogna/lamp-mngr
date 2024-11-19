@@ -239,7 +239,10 @@ EOF
     fi
     unzip /var/www/$domain/latest.zip -d /var/www/$domain || { echo -e "${RED}Error extracting WordPress${RESET}"; exit 1; }
     rm /var/www/$domain/latest.zip
-    chown -R www-data:www-data /var/www/$domain
+
+    # Move the WordPress files to the DocumentRoot
+    mv /var/www/$domain/wordpress/* /var/www/$domain
+    rm -rf /var/www/$domain/wordpress
   fi
 
   # Set permissions for the DocumentRoot directory
