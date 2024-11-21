@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Created by: Enrico Marogna - https://enricomarogna.com
-$Version="v1.10.0"
+$Version="v1.10.1"
 # Tested on Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # This script automates the installation and configuration of a LAMP server (Linux, Apache, MySQL, PHP) on an Ubuntu system.
@@ -263,10 +263,11 @@ EOF
     cloudflared service restart
   fi
 
-  # Get current user and add it to the www-data group
-  current_user=$(logname)
-  usermod -aG www-data $current_user
-  exec "$SHELL"
+  # Get current user, check if is in www-data group and, if not, add it
+  if [ $(groups $current_user | grep -c www-data) -eq 0 ]; then
+    usermod -aG www-data $current_user
+    newgrp www-data
+  fi
 
   # Restart Apache to apply changes
   service apache2 restart || { echo -e "${RED}Error restarting Apache${RESET}"; exit 1; }
