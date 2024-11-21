@@ -1,5 +1,5 @@
 # LAMP Manager Script
-![Version](https://img.shields.io/badge/Version-1.9.0-blue)
+![Version](https://img.shields.io/badge/Version-1.10.0-blue)
 ![Tested on](https://img.shields.io/badge/Tested%20on-Ubuntu%2022.04%20LTS-violet)
 ![Licenza](https://img.shields.io/badge/Licenza-MIT-green)
 ![GitHub last commit](https://img.shields.io/github/last-commit/enricomarogna/lamp-mngr)

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Created by: Enrico Marogna - https://enricomarogna.com
-# Version 1.9.0
+$Version="v1.10.0"
 # Tested on Ubuntu 22.04 LTS
 # ---------------------------------------------------------
 # This script automates the installation and configuration of a LAMP server (Linux, Apache, MySQL, PHP) on an Ubuntu system.
@@ -35,7 +35,7 @@ echo "  ░ ░ ▒  ░ ▒   ▒▒ ░░  ░      ░░▒ ░     ░  �
 echo "    ░ ░    ░   ▒   ░      ░   ░░       ░      ░      ░   ░ ░ ░ ░   ░   ░░   ░ "
 echo "      ░  ░     ░  ░       ░                   ░            ░       ░    ░     "
 echo -e "${RESET}"
-echo "Created by: Enrico Marogna - v1.9.0"
+echo "Created by: Enrico Marogna - Version: $Version"
 echo ""
 echo ""
 
@@ -262,6 +262,11 @@ EOF
   if [ -f /usr/local/bin/cloudflared ]; then
     cloudflared service restart
   fi
+
+  # Get current user and add it to the www-data group
+  current_user=$(logname)
+  usermod -aG www-data $current_user
+  exec "$SHELL"
 
   # Restart Apache to apply changes
   service apache2 restart || { echo -e "${RED}Error restarting Apache${RESET}"; exit 1; }
