@@ -99,6 +99,6 @@ Created by [Enrico Marogna](https://enricomarogna.com/)
 Distributed under the MIT License. See the [LICENSE](https://raw.githubusercontent.com/enricomarogna/lamp-mngr/refs/heads/main/LICENSE.rst) file for more details.
 
 ## Support Development
-You can support the development of this project with a donation on Ko-fi.
+If you find this project useful, consider [offering me a beer 🍺](https://www.paypal.com/paypalme/enricomarogna/5) — it helps a lot!
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W8166X59)
+[![Donate via PayPal](https://img.shields.io/badge/PayPal-Buy%20me%20a%20beer-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/enricomarogna/5)
