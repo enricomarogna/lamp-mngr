@@ -217,7 +217,7 @@ install_site() {
     CustomLog /var/log/apache2/$domain-access.log combined
     ErrorLog /var/log/apache2/$domain-error.log
     <Directory $doc_root>
-        Options Indexes FollowSymLinks
+        Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
     </Directory>
